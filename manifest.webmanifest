@@ -1,0 +1,14 @@
+{
+ "name": "MyICE",
+ "short_name": "MyICE",
+ "description": "What a journey costs in a petrol or diesel car, compared with an electric car, plus the cheapest petrol near you",
+ "start_url": "./",
+ "scope": "./",
+ "display": "standalone",
+ "background_color": "#0b1830",
+ "theme_color": "#0b1830",
+ "icons": [
+  {"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"},
+  {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}
+ ]
+}

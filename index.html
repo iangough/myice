@@ -1,0 +1,926 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b1830"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="MyICE"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png"></head><body>
+<title>MyICE</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+/* Same look as MyEV: dark navy, one column on a phone, two columns on a wide screen */
+:root{
+ --bg:#0b1830; --card:#12264a; --fg:#e8eefc; --mute:#9db2d6; --line:#27437a;
+ --accent:#5b9bff; --accent-fg:#06142b; --good:#5fd38d; --warn:#e8b25a; --petrol:#ff8f7a; --hl:#183564;
+ --head:'Space Grotesk','Segoe UI',Arial,sans-serif; --body:'Inter','Segoe UI',Arial,sans-serif; color-scheme:dark;
+}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){
+ --bg:#cfe0fa; --card:#f2f7ff; --fg:#0c2040; --mute:#4a6286; --line:#a9c2ea;
+ --accent:#1450c0; --accent-fg:#ffffff; --good:#0a7a3b; --warn:#9a5b00; --petrol:#a1311f; --hl:#e0ebfd; color-scheme:light}}
+:root[data-theme="light"]{
+ --bg:#cfe0fa; --card:#f2f7ff; --fg:#0c2040; --mute:#4a6286; --line:#a9c2ea;
+ --accent:#1450c0; --accent-fg:#ffffff; --good:#0a7a3b; --warn:#9a5b00; --petrol:#a1311f; --hl:#e0ebfd; color-scheme:light}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.45;margin:0;
+ padding-block:14px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+[hidden]{display:none!important}
+.page{max-width:1120px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--head);font-size:26px;margin:0;letter-spacing:-.01em}
+h2{font-family:var(--head);font-size:17px;margin:0 0 8px}
+.cols{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;align-items:start}
+.col{display:flex;flex-direction:column;gap:14px;min-width:0}
+@media(min-width:880px){.cols{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+@media(max-width:879px){.cols{display:flex;flex-direction:column}.col{display:contents}
+ #routecard{order:1}#carcard{order:2}#costcard{order:3}#tripsbox{order:4}#findcard{order:1}#rescard{order:2}#alertcard{order:3}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-width:0}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 12px}
+.grid .full{grid-column:1/-1}
+@media(max-width:480px){.grid{grid-template-columns:1fr}}
+label{display:block;font-size:12px;font-weight:600;color:var(--mute);text-transform:uppercase;letter-spacing:.04em;margin:10px 0 3px}
+.grid label{margin-top:0}
+input,select{width:100%;box-sizing:border-box;font:16px var(--body);padding:8px 9px;border:1px solid var(--line);border-radius:7px;background:var(--bg);color:var(--fg)}
+input:focus-visible,select:focus-visible,button:focus-visible,summary:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.btn{font:600 15px var(--body);padding:9px 14px;border-radius:8px;border:1px solid var(--accent);background:var(--accent);color:var(--accent-fg);cursor:pointer}
+.btn.alt{background:transparent;color:var(--accent)}
+.btn.warn{background:transparent;color:var(--petrol);border-color:var(--petrol)}
+.btn.sm{font-size:13px;padding:5px 9px}
+.btn[disabled]{opacity:.4;cursor:default}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.row.nw{flex-wrap:nowrap}
+.chk{display:flex;gap:8px;align-items:center;font-size:15px;color:var(--fg);text-transform:none;letter-spacing:0;font-weight:500;margin:10px 0 0}
+.chk input{width:auto}
+.note{color:var(--mute);font-size:13px;margin:6px 0 0}
+.msg{font-size:14px;margin:8px 0 0}
+a{color:var(--accent)}
+a.btn{display:inline-block;text-decoration:none}
+.card.hero{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 25%,transparent)}
+.lead{font-size:16px;color:var(--mute);margin:-2px 0 4px}
+.netbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;color:var(--mute);margin-top:-6px}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--good);flex:none}
+.dot.warn{background:var(--warn)}.dot.bad{background:var(--petrol)}
+.stepn{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:var(--accent);color:var(--accent-fg);font:700 13px var(--head);margin-right:8px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap}
+.st{display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:4px 10px;align-items:center;border-bottom:1px solid var(--line);padding:10px 0}
+.st:last-child{border-bottom:0}
+.st .rk{font:700 18px var(--head);color:var(--mute);text-align:center}
+.st .nm{font-weight:600;overflow-wrap:anywhere}
+.st small{display:block;color:var(--mute);font-size:12px}
+.st .pr{font:700 24px var(--head);font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.st .go{grid-column:2/-1}
+.st.top .pr,.st.top .rk{color:var(--good)}
+.tag{display:inline-block;font:700 11px var(--head);letter-spacing:.05em;text-transform:uppercase;color:var(--accent-fg);background:var(--good);border-radius:999px;padding:1px 7px;margin-left:6px;vertical-align:middle}
+.age{font-size:13px;color:var(--mute)}
+.age.old{color:var(--warn);font-weight:600}
+.notice{border-color:var(--warn)}
+details>summary{cursor:pointer;font:600 17px var(--head)}
+ul.rules{margin:6px 0 0;padding-left:20px;color:var(--mute);font-size:13px}
+.opt{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:2px 10px;align-items:center;border:1px solid var(--line);border-radius:9px;padding:9px 10px;margin-bottom:8px;cursor:pointer;background:var(--bg)}
+.opt.sel{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 25%,transparent)}
+.opt input[type=radio]{width:auto;margin:0}
+.opt .nm{font-weight:600;overflow-wrap:anywhere}
+.opt small{color:var(--mute);font-size:12px;display:block}
+.opt .pc{text-align:right;font:700 17px var(--head);white-space:nowrap}
+.tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:8px 0 10px}
+.tile{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--bg)}
+.tile small{display:block;color:var(--mute);font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+.tile .v{font:700 24px var(--head);font-variant-numeric:tabular-nums}
+.tile.ev .v{color:var(--good)}.tile.pet .v{color:var(--petrol)}
+@media(max-width:480px){.tile{padding:8px 9px}.tile small{font-size:10.5px}.tile .v{font-size:19px}}
+.tblwrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th,td{padding:8px 6px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-size:12px;color:var(--mute);text-transform:uppercase;letter-spacing:.04em}
+th:first-child,td:first-child{text-align:left}
+tr.sel td{background:var(--hl)}
+td.g{color:var(--good);font-weight:700}td.p{color:var(--petrol);font-weight:700}
+.sum{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px}
+.sum div{border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.sum small{display:block;color:var(--mute);font-size:12px}
+.big{font-family:var(--head);font-size:20px;font-weight:700}
+.big4{font:700 40px var(--head);letter-spacing:.2em;color:var(--accent)}
+.li{display:flex;justify-content:space-between;gap:10px;align-items:center;border-bottom:1px solid var(--line);padding:8px 0}
+.li:last-child{border-bottom:0}
+.li small{display:block;color:var(--mute);font-size:12px}
+.sub{border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-top:12px}
+.sub>h2{font-size:16px}
+</style>
+
+<div class="page">
+ <div class="row" style="justify-content:space-between"><h1>MyICE</h1>
+  <label class="chk" for="theme" style="text-transform:none;margin:0">Theme <select id="theme" style="width:auto"><option value="auto">Auto (system)</option><option value="dark">Dark blue</option><option value="light">Light blue</option></select></label></div>
+ <p class="lead">What does a journey cost in a petrol or diesel car, compared with an electric car?</p>
+ <div class="tabs" role="group" aria-label="What do you want to do?"><button class="btn" id="tab_t" type="button">Journey cost</button><button class="btn alt" id="tab_f" type="button">Cheapest petrol</button></div>
+ <div class="netbar" id="netbar" role="status" aria-live="polite"><span class="dot" id="netdot"></span><span id="nettext">Checking connection...</span><button class="btn alt sm" id="netinfo" type="button">What works offline?</button></div>
+ <div class="card" id="netdetail" hidden>
+  <h2>What works with no connection</h2>
+  <p class="note" style="margin:0"><b>Still works:</b> opening the app, working out a cost from miles and prices you already have, your saved cars, places and journeys, and the last list of stations you looked at (marked as a saved copy, with its age).</p>
+  <p class="note"><b>Needs internet:</b> road miles between postcodes, fresh petrol prices, sharing with family (your changes wait on this device and sync later) and price-drop alerts. The app must have been opened once online before it can open with no signal.</p>
+ </div>
+ <div class="card notice" id="noticebox" hidden>
+  <h2>Message</h2><p style="margin:0" id="noticetext"></p>
+  <div class="row" style="margin-top:8px"><button class="btn alt sm" id="noticeok" type="button">Got it</button></div>
+ </div>
+
+ <div class="card hero" id="welcome" hidden>
+  <h2>Welcome to MyICE</h2>
+  <p class="note" style="margin:0 0 10px">Two quick steps. You can change anything later.</p>
+  <label for="w_pc" style="margin-top:0"><span class="stepn">1</span>Your home postcode</label>
+  <input id="w_pc" autocomplete="postal-code" autocapitalize="characters" placeholder="For example SP11 6ZG">
+  <label for="w_car"><span class="stepn">2</span>Your petrol or diesel car</label>
+  <select id="w_car"></select>
+  <div class="row" style="margin-top:12px"><button class="btn" id="w_save" type="button">Save and start</button><button class="btn alt" id="w_skip" type="button">Skip for now</button></div>
+  <p class="msg" id="w_msg" style="color:var(--petrol)"></p>
+  <p class="note">Your postcode stays on this phone. When you look up petrol prices, only the position of a postcode, rounded to about 1 km, is sent to the MyICE service. No name, no account, no tracking.</p>
+ </div>
+
+ <div class="cols">
+  <div class="col">
+   <div class="card pt" id="routecard">
+    <h2><span class="stepn">1</span>Your route</h2>
+    <label for="t_from" style="margin-top:0">From (postcode, nickname or Home)</label>
+    <div class="row nw"><input id="t_from" list="t_places" autocomplete="off" autocapitalize="characters" placeholder="For example Home"><button class="btn alt sm" id="t_here" type="button" style="white-space:nowrap">My location</button></div>
+    <div id="stops"></div>
+    <div class="row" style="margin-top:8px"><button class="btn alt sm" id="addstop" type="button">Add a stop</button></div>
+    <label for="t_to">To (postcode or nickname)</label>
+    <input id="t_to" list="t_places" autocomplete="off" autocapitalize="characters" placeholder="For example Dan or GU51 3PF">
+    <label class="chk" for="t_ret"><input type="checkbox" id="t_ret"> Return trip (come back the same way)</label>
+    <label for="t_name">Journey name (optional)</label>
+    <input id="t_name" autocomplete="off" placeholder="For example Ian to Dan">
+    <datalist id="t_places"></datalist>
+   </div>
+   <div class="card pt" id="carcard">
+    <h2><span class="stepn">2</span>Car, petrol and electric comparison</h2>
+    <label for="t_car" style="margin-top:0">Your petrol or diesel car</label>
+    <select id="t_car"></select>
+    <div class="grid" style="margin-top:8px">
+     <div><label for="t_mpg">Real-world miles per gallon</label><input id="t_mpg" type="number" inputmode="decimal" min="5" max="200" step="0.1"></div>
+     <div><label>Fuel</label><div id="t_fuelname" style="padding:9px 0;font-weight:600"></div></div>
+    </div>
+    <p class="note">The car list holds my estimates of real-world miles per gallon. Overtype the figure with your own.</p>
+    <label for="t_near">Petrol prices from stations near</label>
+    <select id="t_near"><option value="start">The start of the journey</option><option value="here">Where I am now</option></select>
+    <label for="t_ev">Electric car to compare with</label>
+    <select id="t_ev"></select>
+    <div class="grid" style="margin-top:8px">
+     <div><label for="t_evmi">Real-world miles per kWh</label><input id="t_evmi" type="number" inputmode="decimal" min="0.5" max="10" step="0.05"></div>
+     <div><label for="t_season">Season</label><select id="t_season"><option value="sum">Summer</option><option value="nor">Normal</option><option value="win">Winter</option></select></div>
+    </div>
+    <label for="t_sup">Electricity tariff</label>
+    <select id="t_sup"></select>
+    <div class="row" style="margin-top:12px"><button class="btn" id="t_go" type="button">Work out the cost</button></div>
+    <p class="msg" id="t_msg" role="status" aria-live="polite"></p>
+    <p class="note">Road miles come from OpenStreetMap routing. Petrol cost = miles divided by miles per gallon, times 4.546 litres, times the price you choose. Electric cost = miles divided by miles per kWh (for the season), times the tariff rate. Only the position of the start or of where you are, rounded to about 1 km, is sent to find nearby prices.</p>
+   </div>
+
+   <div class="card pf" id="findcard" hidden>
+    <h2>Find cheap petrol</h2>
+    <div class="grid">
+     <div class="full"><label for="pc">Postcode</label><input id="pc" autocomplete="postal-code" autocapitalize="characters" placeholder="For example SP11 6ZG"></div>
+     <div><label for="fuel">Fuel</label><select id="fuel"></select></div>
+     <div><label for="mi">Within</label><select id="mi"><option value="2">2 miles</option><option value="5">5 miles</option><option value="10">10 miles</option><option value="15">15 miles</option><option value="25">25 miles</option></select></div>
+    </div>
+    <div class="row" style="margin-top:12px"><button class="btn" id="find" type="button">Show the cheapest 10</button><button class="btn alt" id="here" type="button">Use my location</button></div>
+    <p class="msg" id="findmsg" role="status" aria-live="polite"></p>
+    <p class="note">Away from home? Press <b>Use my location</b> and your phone will ask once to share where you are. Your position is only used for this search: it is not saved, and it is rounded to about 1 km before it is sent. Your postcode, fuel and distance are saved on this phone. Leaded (4-star) petrol is not in the government price data, so it cannot be listed.</p>
+   </div>
+   <div class="card pf" id="alertcard" hidden>
+    <h2>Price-drop alerts</h2>
+    <p class="note" style="margin:0 0 8px" id="alertinfo"></p>
+    <div class="grid">
+     <div class="full"><label for="mind">Only tell me about drops of at least</label>
+      <select id="mind"><option value="1">1p a litre</option><option value="2">2p a litre</option><option value="3">3p a litre</option><option value="5">5p a litre</option></select></div>
+    </div>
+    <div class="row" style="margin-top:10px"><button class="btn" id="alerttoggle" type="button">Turn on alerts</button><button class="btn alt" id="alerttest" type="button" hidden>Send me a test alert</button></div>
+    <p class="msg" id="alertmsg" role="status" aria-live="polite"></p>
+    <details style="margin-top:8px"><summary style="font-size:15px">How alerts work (and what stops them being annoying)</summary>
+     <p class="note">An alert looks like: <i>Price drop at Tesco Andover, SP10 1UZ: was 139.9p, now 136.9p. Ranked 4th (was 7th)</i>.</p>
+     <ul class="rules">
+      <li>Only real drops of at least your chosen size, at a station that is now in your top 10 for your fuel and distance.</li>
+      <li>At most one alert per check, at most 3 an hour and 6 a day.</li>
+      <li>The same station is not reported to you again for 2 hours.</li>
+      <li>None between 10 at night and 7 in the morning.</li>
+      <li>Your phone will ask once: Allow MyICE to send notifications? Choose Allow.</li>
+      <li>The service keeps only the phone's private alert address, the position of your postcode rounded to about 1 km, your fuel and your settings.</li>
+     </ul></details>
+   </div>
+  </div>
+
+  <div class="col">
+   <div class="card pt" id="costcard">
+    <h2><span class="stepn">3</span><span id="tr_head">What it costs</span></h2>
+    <div id="tr_body"><p class="note">Fill in the route and car, then press Work out the cost.</p></div>
+    <div class="row" id="tr_actions" style="margin-top:10px" hidden><button class="btn" id="t_save" type="button">Save journey</button><a class="btn alt" id="t_maps" target="_blank" rel="noopener">Directions</a><a class="btn alt" id="t_wa" target="_blank" rel="noopener">Send on WhatsApp</a></div>
+   </div>
+   <details class="card pt" id="tripsbox"><summary id="tripsum">Recent journeys</summary>
+    <div style="margin-top:12px"><div class="sum" id="sumbox"></div><div id="triplist" style="margin-top:10px"></div>
+    <div class="row" style="margin-top:10px"><button class="btn warn sm" id="clear" type="button">Clear all journeys</button></div></div></details>
+
+   <div class="card pf" id="rescard" hidden>
+    <h2 id="reshead">Cheapest near you</h2>
+    <div class="age" id="age" role="status" aria-live="polite"></div>
+    <div id="res"><p class="note">Type your postcode and press the button.</p></div>
+    <p class="note" id="savenote"></p>
+   </div>
+  </div>
+ </div>
+
+ <details class="card pt" id="setbox"><summary>Settings: home, cars, places, sharing</summary>
+  <div class="sub"><h2>Home</h2>
+   <label for="s_pc" style="margin-top:0">Home postcode</label>
+   <div class="row nw"><input id="s_pc" autocomplete="postal-code" autocapitalize="characters" placeholder="For example SP11 6ZG"><button class="btn alt sm" id="s_pcsave" type="button">Save</button></div>
+   <p class="note">Home means this postcode when you type Home in From or To. It is also where price-drop alerts look.</p></div>
+  <div class="sub"><h2>My petrol and diesel cars (ICE list)</h2>
+   <div id="icelist"></div>
+   <div class="grid" style="margin-top:8px">
+    <div class="full"><label for="c_name" style="margin-top:0">Car name</label><input id="c_name" autocomplete="off" placeholder="For example Golf"></div>
+    <div><label for="c_mpg">Real-world miles per gallon</label><input id="c_mpg" type="number" inputmode="decimal" min="5" max="200" step="0.1" placeholder="For example 42"></div>
+    <div><label for="c_fuel">Fuel</label><select id="c_fuel"></select></div>
+   </div>
+   <div class="row" style="margin-top:10px"><button class="btn alt" id="c_save" type="button">Save this car</button></div>
+   <p class="note">The car list in step 2 already holds about 100 popular cars. Add your own here if yours is not there or you know its real mpg.</p></div>
+  <div class="sub"><h2>My electric cars (EV list)</h2>
+   <div id="evlist"></div>
+   <div class="grid" style="margin-top:8px">
+    <div><label for="e_name" style="margin-top:0">Electric car name</label><input id="e_name" autocomplete="off" placeholder="For example My Tesla"></div>
+    <div><label for="e_mi">Real-world miles per kWh (normal season)</label><input id="e_mi" type="number" inputmode="decimal" min="0.5" max="10" step="0.05" placeholder="For example 3.5"></div>
+   </div>
+   <div class="row" style="margin-top:10px"><button class="btn alt" id="e_save" type="button">Save this electric car</button></div>
+   <p class="note">Used for the electric comparison in step 2. Summer is about 10% better and winter about 15% worse than normal.</p></div>
+  <div class="sub"><h2>Saved places</h2>
+   <div id="placelist"></div>
+   <div class="grid" style="margin-top:8px">
+    <div><label for="p_name" style="margin-top:0">Nickname</label><input id="p_name" autocomplete="off" placeholder="For example Dan"></div>
+    <div><label for="p_pc">Postcode</label><input id="p_pc" autocomplete="off" autocapitalize="characters" placeholder="For example GU51 3PF"></div>
+   </div>
+   <div class="row" style="margin-top:10px"><button class="btn alt" id="p_save" type="button">Save this place</button></div>
+   <p class="note">Type a nickname in From, a stop or To instead of a postcode. The word Home always means your home postcode.</p></div>
+  <div class="sub"><h2>Share journeys with family</h2>
+   <p class="note" style="margin:0 0 8px" id="sharestat">Not sharing.</p>
+   <div id="shareoff">
+    <label for="sharename" style="margin-top:0">Group name (optional)</label>
+    <input id="sharename" maxlength="40" autocomplete="off" placeholder="Type a name here, for example Ian and Helene">
+    <label for="sharecap">Who do you want to share with?</label>
+    <select id="sharecap"><option value="2">One other person (a pair)</option><option value="3">A small group of 3 people</option><option value="4">A small group of 4 people</option><option value="5">A small group of 5 people</option><option value="6">A small group of 6 people</option><option value="7">A small group of 7 people</option><option value="8">A small group of 8 people</option><option value="9">A small group of 9 people</option><option value="10">A small group of 10 people</option></select>
+    <div class="row" style="margin-top:8px"><button class="btn alt sm" id="sharestart" type="button">Start sharing and get a code</button></div>
+    <label for="joincode">Or join someone with their 4-digit code</label>
+    <div class="row"><input id="joincode" inputmode="numeric" maxlength="4" pattern="[0-9]*" autocomplete="off" placeholder="Type the 4 digits here" style="max-width:200px"><button class="btn alt sm" id="sharejoin" type="button">Join</button></div>
+   </div>
+   <div id="shareon" hidden>
+    <label for="gname" style="margin-top:0">Group name</label>
+    <div class="row"><input id="gname" maxlength="40" autocomplete="off" placeholder="Type a group name here" style="max-width:280px"><button class="btn alt sm" id="gnamesave" type="button">Save group name</button></div>
+    <div id="invitebox" hidden><div class="big4" id="invitecode"></div><p class="note" style="margin-top:0">Give this code to the person you are adding. It works for <span id="invitesecs"></span> and stops working once your group is full.</p><div class="row" style="margin:0 0 10px"><button class="btn sm" id="sendcode" type="button">Send code by WhatsApp</button></div></div>
+    <div class="row" style="margin-top:8px"><button class="btn alt sm" id="syncnow" type="button">Sync now</button><button class="btn alt sm" id="newinvite" type="button">New code</button><button class="btn warn sm" id="leavegrp" type="button">Leave this group</button><button class="btn warn sm" id="disbandgrp" type="button">End sharing for everyone</button></div>
+   </div>
+   <p class="msg" id="syncstatus"></p>
+   <p class="note">A pair is just you and one other person. Once your group is full, nobody else can join it or see anything. A device can only be in one group. The code lasts 10 minutes and the other person needs it only once. Journeys, favourites, saved places, petrol cars and electric cars then stay in step on every phone in the group. MyICE groups are separate from MyEV groups.</p></div>
+ </details>
+
+ <div class="card">
+  <h2>Install and share</h2>
+  <p class="note" style="margin:0 0 8px">iPhone: open it in Safari, tap Share, then Add to Home Screen. Android: open it in Chrome, tap the three dots, then Install app. Laptop: just open the link.</p>
+  <div class="row"><a class="btn alt sm" id="app_wa" target="_blank" rel="noopener">Send on WhatsApp</a><button class="btn alt sm" id="app_copy" type="button">Copy link</button><button class="btn alt sm" id="app_native" type="button" hidden>Share...</button></div>
+ </div>
+ <div class="card">
+  <h2>About the prices</h2>
+  <p class="note" style="margin:0">Petrol and diesel prices come from the government Fuel Finder service (Open Government Licence) and are set by the stations themselves, so they can be a little behind the pump. <a href="https://www.gov.uk/guidance/fuel-finder" target="_blank" rel="noopener">Report a discrepancy</a>. Electricity rates and the car figures are estimates: check them. MyICE has no adverts and no tracking. Companion to MyEV Calculator (the electric-car version of this app).</p>
+ </div>
+</div>
+
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+const KEY="myice-v1";
+const SYNC_URL="https://myev.cloudgough.synology.me:8443";
+const APP_URL="https://iangough.github.io/myice/";
+const BUILD="2026-11-14a";
+const FUELS=[["unleaded","Unleaded (E10)"],["super","Super unleaded (E5)"],["diesel","Diesel"],["premium_diesel","Premium diesel"],["hvo","HVO diesel"],["b10","B10 diesel"]];
+const fname=id=>(FUELS.find(f=>f[0]===id)||[0,id])[1];
+const GAL=4.54609;                                   /* litres in a UK gallon */
+const SEAS=[["sum","Summer"],["nor","Normal"],["win","Winter"]];
+const EVF={sum:1.1,nor:1,win:0.85};                  /* my estimate: summer 10% better, winter 15% worse than normal */
+
+/* Petrol and diesel cars: [name, my estimate of real-world miles per gallon, fuel p = petrol (E10) or d = diesel]. Estimates: overtype them. */
+const ICE=[
+["Ford Fiesta 1.0 EcoBoost",50,"p"],["Ford Puma 1.0 mild hybrid",46,"p"],["Ford Focus 1.0 EcoBoost",46,"p"],["Ford Kuga 2.5 hybrid",44,"p"],["Ford Mustang 5.0 V8",22,"p"],
+["VW Polo 1.0 TSI",48,"p"],["VW Golf 1.5 TSI",44,"p"],["VW T-Roc 1.0 TSI",42,"p"],["VW Tiguan 1.5 TSI",38,"p"],
+["Vauxhall Corsa 1.2 turbo",46,"p"],["Vauxhall Astra 1.2 turbo",45,"p"],["Vauxhall Mokka 1.2 turbo",43,"p"],
+["Nissan Micra 1.0 IG-T",48,"p"],["Nissan Juke 1.0 DIG-T",42,"p"],["Nissan Qashqai 1.3 mild hybrid",40,"p"],
+["Toyota Aygo X 1.0",52,"p"],["Toyota Yaris 1.5 hybrid",62,"p"],["Toyota Corolla 1.8 hybrid",55,"p"],["Toyota RAV4 hybrid",46,"p"],
+["Honda Jazz hybrid",54,"p"],["Honda Civic 1.5 VTEC turbo",42,"p"],
+["Hyundai i10 1.0",52,"p"],["Hyundai i20 1.0 T-GDi",46,"p"],["Hyundai Tucson 1.6 T-GDi",38,"p"],
+["Kia Picanto 1.0",52,"p"],["Kia Ceed 1.0 T-GDi",46,"p"],["Kia Sportage 1.6 T-GDi",38,"p"],
+["Mini Cooper 1.5",44,"p"],["Fiat 500 1.0 mild hybrid",50,"p"],
+["Skoda Fabia 1.0 TSI",50,"p"],["Skoda Octavia 1.5 TSI",46,"p"],["Seat Ibiza 1.0 TSI",49,"p"],["Seat Leon 1.5 TSI",45,"p"],
+["Renault Clio 1.0 TCe",48,"p"],["Renault Captur 1.3 TCe",42,"p"],
+["Peugeot 208 1.2 PureTech",48,"p"],["Peugeot 2008 1.2 PureTech",44,"p"],["Peugeot 308 1.2 PureTech",46,"p"],["Citroen C3 1.2 PureTech",47,"p"],
+["Dacia Sandero 1.0 TCe",46,"p"],["Dacia Duster 1.3 TCe",40,"p"],
+["Mazda 2 1.5 mild hybrid",50,"p"],["Mazda 3 2.0 mild hybrid",44,"p"],["Mazda CX-5 2.0",36,"p"],["Mazda MX-5 1.5",40,"p"],
+["Suzuki Swift 1.2 mild hybrid",52,"p"],["Suzuki Vitara 1.4",40,"p"],["MG ZS 1.0 turbo",40,"p"],["MG3 hybrid",55,"p"],["MG HS 1.5 turbo",36,"p"],
+["BMW 1 Series 118i",42,"p"],["BMW 3 Series 320i",38,"p"],["BMW X1 sDrive18i",38,"p"],
+["Audi A1 30 TFSI",46,"p"],["Audi A3 35 TFSI",44,"p"],["Audi A4 35 TFSI",40,"p"],["Audi Q3 35 TFSI",36,"p"],["Audi Q5 40 TFSI",32,"p"],
+["Mercedes A-Class A180",42,"p"],["Mercedes C-Class C200",38,"p"],["Mercedes GLA 200",38,"p"],
+["Volvo XC40 B3",38,"p"],["Volvo XC60 B5",34,"p"],["Land Rover Defender 2.0 P300",24,"p"],["Range Rover Evoque 2.0 P200",30,"p"],["Jaguar F-Pace 2.0 P250",28,"p"],
+["Porsche Macan 2.0",28,"p"],["Subaru Outback 2.5",30,"p"],["Jeep Renegade 1.0",38,"p"],
+["Ford Fiesta 1.5 TDCi",62,"d"],["Ford Focus 1.5 EcoBlue",58,"d"],["Ford Kuga 2.0 EcoBlue",46,"d"],["Ford Transit Custom 2.0 EcoBlue (van)",36,"d"],["Ford Ranger 2.0 EcoBlue",31,"d"],
+["VW Golf 2.0 TDI",58,"d"],["VW Passat 2.0 TDI",55,"d"],["VW Tiguan 2.0 TDI",46,"d"],["VW Transporter T6 2.0 TDI (van)",34,"d"],
+["Skoda Octavia 2.0 TDI",58,"d"],["Skoda Superb 2.0 TDI",52,"d"],["Skoda Kodiaq 2.0 TDI",44,"d"],["Seat Leon 2.0 TDI",56,"d"],
+["Audi A3 30 TDI",56,"d"],["Audi A4 35 TDI",52,"d"],["Audi Q5 40 TDI",44,"d"],
+["BMW 320d",52,"d"],["BMW 520d",50,"d"],["BMW X3 xDrive20d",42,"d"],["Mini Cooper D",54,"d"],
+["Mercedes C220d",52,"d"],["Mercedes E220d",50,"d"],["Mercedes Sprinter (van)",33,"d"],
+["Nissan Qashqai 1.5 dCi",50,"d"],["Kia Sportage 1.6 CRDi",44,"d"],["Hyundai Tucson 1.6 CRDi",44,"d"],
+["Vauxhall Astra 1.5 diesel",56,"d"],["Vauxhall Vivaro (van)",33,"d"],["Peugeot 308 1.5 BlueHDi",56,"d"],["Peugeot 3008 1.5 BlueHDi",50,"d"],
+["Renault Clio 1.5 dCi",58,"d"],["Renault Trafic (van)",31,"d"],["Dacia Duster 1.5 dCi",50,"d"],
+["Land Rover Discovery Sport 2.0 D180",36,"d"],["Land Rover Defender 3.0 D250",28,"d"],["Range Rover Sport 3.0 D300",28,"d"],
+["Volvo XC60 B4 diesel",40,"d"],["Volvo V60 D4",48,"d"],["Jaguar XE 2.0 diesel",50,"d"],
+["Toyota Hilux 2.4 D-4D",32,"d"],["Mitsubishi L200 2.2",30,"d"],["Isuzu D-Max 1.9",32,"d"]
+].map((c,i)=>({id:"d:"+i,name:c[0],mpg:c[1],fuel:c[2]==="d"?"diesel":"unleaded"}));
+/* Electric cars for the comparison: [name, my estimate of real-world miles per kWh in a normal season]. Estimates: overtype them. */
+const EVS=[
+["Tesla Model 3 RWD",3.8],["Tesla Model Y RWD",3.5],["Tesla Model Y Long Range AWD",3.3],["Nissan Leaf 62 kWh",3.2],["Nissan Ariya",2.9],
+["Kia EV6 77 kWh",3.1],["Kia Niro EV",3.4],["Kia EV3",3.5],["Hyundai Ioniq 5",3.0],["Hyundai Ioniq 6",3.0],["Hyundai Kona Electric 64 kWh",3.6],
+["MG4",3.5],["MG ZS EV",3.0],["VW ID.3",3.6],["VW ID.4",3.0],["Skoda Enyaq 85",3.1],["Skoda Elroq",3.5],["Cupra Born",3.6],
+["Renault 5",3.8],["Renault Megane E-Tech",3.6],["Renault Zoe",3.2],["Fiat 500e",3.6],["Vauxhall Corsa Electric",3.5],["Vauxhall Mokka Electric",3.2],
+["Peugeot e-208",3.6],["Peugeot e-2008",3.2],["Citroen e-C3",3.7],["BMW i4 eDrive40",3.2],["BMW iX1",3.1],["Audi Q4 e-tron 40",3.0],
+["Mini Cooper Electric",3.4],["Polestar 2",3.0],["Volvo EX30",3.4],["BYD Dolphin",3.6],["BYD Atto 3",3.2],["Mercedes EQA",3.0],
+["Ford Mustang Mach-E",2.8],["Jaguar I-Pace",2.5],["Mazda MX-30",2.9]
+].map((c,i)=>({id:"e:"+i,name:c[0],mi:c[1]}));
+/* Electricity tariffs (the starting list; the MyEV admin console publishes newer ones). Rates are pence per kWh. */
+const SUPPLIERS=[
+ {id:"cap",name:"Standard tariff (price cap)",cheap:26.3,normal:26.3},
+ {id:"iog",name:"Octopus Intelligent Go",cheap:7.0,normal:26.3},
+ {id:"go",name:"Octopus Go",cheap:8.5,normal:30.1},
+ {id:"flex",name:"Octopus Flexible (price cap)",cheap:26.3,normal:26.3},
+ {id:"eon",name:"E.ON Next Drive",cheap:8.5,normal:30.9},
+ {id:"edf",name:"EDF GoElectric",cheap:6.99,normal:26.3},
+ {id:"bg",name:"British Gas EV Power",cheap:9.5,normal:26.3},
+ {id:"ovo",name:"OVO Charge Anytime",cheap:13.3,normal:13.3}
+];
+
+function applyTheme(v){const r=document.documentElement;if(v==="dark"||v==="light")r.setAttribute("data-theme",v);else r.removeAttribute("data-theme")}
+let tv="auto";try{tv=localStorage.getItem("myice-theme")||localStorage.getItem("chintzy-theme")||"auto"}catch(e){}
+applyTheme(tv);$("theme").value=tv;
+$("theme").onchange=()=>{tv=$("theme").value;try{localStorage.setItem("myice-theme",tv)}catch(e){}applyTheme(tv);toast("✓ Theme saved")};
+/* confirmation banner at the top of the screen, so people always see that something happened */
+let toastT=0;function toast(msg,bad){let t=document.getElementById("toast");if(!t){t=document.createElement("div");t.id="toast";t.setAttribute("role","status");t.setAttribute("aria-live","polite");
+ t.style.cssText="position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 12px);transform:translateX(-50%);z-index:9999;max-width:92vw;padding:14px 20px;border-radius:18px;font-size:18px;font-weight:600;box-shadow:0 6px 22px rgba(0,0,0,.4);transition:opacity .2s;opacity:0;pointer-events:none;text-align:center";document.body.appendChild(t)}
+ t.style.background=bad?"#b3261e":"#1f7a4d";t.style.color="#fff";t.textContent=msg;t.style.opacity="1";clearTimeout(toastT);toastT=setTimeout(()=>{t.style.opacity="0"},4200)}
+const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function tfetch(u,ms,o){const c=new AbortController();const t=setTimeout(()=>c.abort(),ms||4000);return fetch(u,Object.assign({signal:c.signal,cache:"no-store"},o||{})).finally(()=>clearTimeout(t))}
+const hav=(a,b,c,d)=>{const R=3958.8,t=x=>x*Math.PI/180,dl=t(c-a),dn=t(d-b),h=Math.sin(dl/2)**2+Math.cos(t(a))*Math.cos(t(c))*Math.sin(dn/2)**2;return 2*R*Math.asin(Math.sqrt(h))};
+const gbp=v=>"£"+v.toFixed(2);
+const blur=()=>{try{document.activeElement.blur()}catch(e){}};
+const rid=n=>{const a=new Uint8Array(n);crypto.getRandomValues(a);return Array.from(a).map(x=>x.toString(16).padStart(2,"0")).join("")};
+const uid=()=>"j"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+
+/* ---------- saved settings (this device only) ---------- */
+let S={pc:"",fuel:"unleaded",mi:5,mind:1,alerts:false,welcomed:false,nv:0,gc:{},last:null,mode:"pc",tab:"t",
+ cars:[],places:{},trips:[],tomb:{},ptomb:{},ctomb:{},mpgo:{},evo:{},sync:{},
+ t:{name:"",from:"",stops:[],to:"",ret:false,car:"",near:"start",ev:"e:1",sup:"cap",season:"nor"}};
+(function load(){
+ let j=null,old=false;
+ try{j=JSON.parse(localStorage.getItem(KEY)||"null");if(!j){j=JSON.parse(localStorage.getItem("chintzy-v1")||"null");old=!!j}}catch(e){}
+ if(j&&typeof j==="object"){
+  if(old){   /* settings from the first version of this app (called Chintzy): keep the useful parts */
+   const keep={};["pc","fuel","mi","mind","alerts","welcomed","nv","gc","mode"].forEach(k=>{if(j[k]!==undefined)keep[k]=j[k]});
+   Object.assign(S,keep);
+   if(Array.isArray(j.cars))S.cars=j.cars.filter(c=>c&&c.name&&c.mpg).map(c=>({id:c.id||uid(),name:c.name,mpg:+c.mpg,fuel:c.fuel||"unleaded",kind:"ice",u:Date.now()}));
+   if(j.places&&typeof j.places==="object")Object.keys(j.places).forEach(n=>{S.places[n]={n,p:j.places[n],u:Date.now()}});
+  }else{const t=Object.assign({},S.t,j.t||{});Object.assign(S,j);S.t=t}
+ }
+ if(!Array.isArray(S.t.stops))S.t.stops=[];
+ ["tomb","ptomb","ctomb","mpgo","evo","sync","places","gc"].forEach(k=>{if(!S[k]||typeof S[k]!=="object")S[k]={}});
+ S.cars=(S.cars||[]).map(c=>Object.assign({kind:"ice"},c));
+})();
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+const normPc=p=>{p=String(p||"").toUpperCase().replace(/[^A-Z0-9]/g,"");return p.length>=5?p.slice(0,-3)+" "+p.slice(-3):p};
+const validPc=p=>/^[A-Z]{1,2}\d[A-Z\d]? \d[A-Z]{2}$/.test(normPc(p));
+let cfg={vapid:"",fuels:FUELS.map(f=>({id:f[0],name:f[1],n:1})),notice:"",nver:0,fetched:0,interval:300,cars:[],places:[]};
+try{const c=JSON.parse(localStorage.getItem("myice-cfg")||localStorage.getItem("chintzy-cfg")||"null");if(c&&c.fuels)cfg=c}catch(e){}
+let catalog=null;try{catalog=JSON.parse(localStorage.getItem("myice-catalog")||"null")}catch(e){}
+const sups=()=>(catalog&&Array.isArray(catalog.suppliers)&&catalog.suppliers.length?catalog.suppliers:SUPPLIERS).map(x=>({id:String(x.id),name:String(x.name).replace(/ *\(your current tariff\)/i,""),cheap:+x.cheap,normal:+x.normal}));
+
+/* the lists: ICE cars (mine, typical ones set by the admin, then the built-in list) and electric cars */
+const allIce=()=>S.cars.filter(c=>c.kind!=="ev").map(c=>Object.assign({own:true},c)).concat((cfg.cars||[]).map(c=>({id:"p:"+c.name,name:c.name,mpg:+c.mpg,fuel:c.fuel,typical:true}))).concat(ICE);
+const allEvs=()=>S.cars.filter(c=>c.kind==="ev").map(c=>({id:c.id,name:c.name,mi:+c.mi,own:true})).concat(EVS);
+const placesList=()=>Object.keys(S.places).map(k=>S.places[k]).concat((cfg.places||[]).filter(p=>!(p.n in S.places)).map(p=>({n:p.n,p:p.p,suggested:true})));
+const iceLabel=c=>c.name+" ("+c.mpg+" mpg, "+(c.fuel==="diesel"?"diesel":fname(c.fuel))+")";
+function selCar(){const L=allIce();const c=L.find(x=>x.id===S.t.car)||L.find(x=>x.id==="d:2")||L[0];return c?Object.assign({},c,{mpg:S.mpgo[c.id]||c.mpg}):null}
+function selEv(){const L=allEvs();const c=L.find(x=>x.id===S.t.ev)||L[0];return c?Object.assign({},c,{mi:S.evo[c.id]||c.mi}):null}
+const selSup=()=>{const L=sups();return L.find(x=>x.id===S.t.sup)||L[0]};
+
+/* ---------- connection bar ---------- */
+function net(){const on=navigator.onLine;$("netdot").className="dot"+(on?"":" bad");$("nettext").textContent=on?"Online":"Offline: showing the saved copy"}
+window.addEventListener("online",()=>{net();if(hasTarget())find(false);scheduleSync()});window.addEventListener("offline",net);net();
+$("netinfo").onclick=()=>{const d=$("netdetail");d.hidden=!d.hidden};
+
+/* ---------- server notice from the admin console ---------- */
+function showNotice(){const on=cfg.notice&&cfg.nver!==S.nv;$("noticebox").hidden=!on;if(on)$("noticetext").textContent=cfg.notice}
+$("noticeok").onclick=()=>{S.nv=cfg.nver;save();showNotice();toast("✓ Message dismissed")};
+async function loadCfg(){
+ try{const r=await tfetch(SYNC_URL+"/v1/chintzy/config",8000);if(!r.ok)throw 0;const c=await r.json();
+  if(c.fuels&&c.fuels.length){cfg=c;try{localStorage.setItem("myice-cfg",JSON.stringify(c))}catch(e){}}}catch(e){}
+ try{const r=await tfetch(SYNC_URL+"/v1/catalog",8000);if(r.ok){const c=await r.json();if(c&&Array.isArray(c.suppliers)){catalog=c;try{localStorage.setItem("myice-catalog",JSON.stringify(c))}catch(e){}}}}catch(e){}
+ fillFuels();showNotice();alertUI();fillTrip();
+}
+
+/* ---------- postcode to position: the centre of the postcode (postcodes.io) ---------- */
+async function geocode(pc){
+ pc=normPc(pc);if(S.gc[pc])return S.gc[pc];
+ let j;try{const r=await tfetch("https://api.postcodes.io/postcodes/"+encodeURIComponent(pc),8000);j=await r.json()}catch(e){throw new TypeError("no connection")}
+ if(!j||!j.result)throw new Error("Postcode not found: "+pc);
+ const g={lat:j.result.latitude,lon:j.result.longitude};
+ const k=Object.keys(S.gc);if(k.length>30)delete S.gc[k[0]];S.gc[pc]=g;save();return g;
+}
+function ago(ms){const m=Math.max(0,Math.round(ms/60000));if(m<1)return "just now";if(m<60)return m+" min ago";const h=Math.round(m/60);if(h<48)return h+" h ago";return Math.round(h/24)+" days ago"}
+
+/* current position from the phone (asks permission the first time). Not saved anywhere except in memory for this visit. */
+let here=null;
+function locate(maxAge){
+ return new Promise((ok,no)=>{
+  if(!navigator.geolocation){no(new Error("This browser cannot share your location. Type a postcode instead."));return}
+  navigator.geolocation.getCurrentPosition(p=>{here={lat:p.coords.latitude,lon:p.coords.longitude,acc:p.coords.accuracy};ok(here)},
+   e=>{if(here&&maxAge){ok(here);return}
+    no(new Error(e&&e.code===1?"Location is blocked for MyICE. Allow it in your browser's site settings, or type a postcode.":e&&e.code===3?"Your phone took too long to find your location. Try again, or type a postcode.":"Could not find your location. Try again, or type a postcode."))},
+   {enableHighAccuracy:false,timeout:15000,maximumAge:maxAge?120000:30000});
+ });
+}
+
+/* =====================================================================
+   JOURNEY COST
+   ===================================================================== */
+const rcache={};
+async function roadMiles(a,b){
+ const key=[a.lat,a.lon,b.lat,b.lon].map(x=>(+x).toFixed(4)).join(",");if(rcache[key])return rcache[key];
+ const co=`${a.lon},${a.lat};${b.lon},${b.lat}`;
+ const tries=[
+  async()=>{const r=await tfetch(`https://routing.openstreetmap.de/routed-car/route/v1/driving/${co}?overview=false`,9000);const j=await r.json();return j.routes&&j.routes[0]&&j.routes[0].distance/1609.344},
+  async()=>{const r=await tfetch(`https://router.project-osrm.org/route/v1/driving/${co}?overview=false`,9000);const j=await r.json();return j.routes&&j.routes[0]&&j.routes[0].distance/1609.344},
+  async()=>{const q={locations:[{lat:a.lat,lon:a.lon},{lat:b.lat,lon:b.lon}],costing:"auto",units:"miles"};const r=await tfetch("https://valhalla1.openstreetmap.de/route?json="+encodeURIComponent(JSON.stringify(q)),9000);const j=await r.json();return j.trip&&j.trip.summary&&j.trip.summary.length}
+ ];
+ for(const f of tries){try{const v=await f();if(v&&v>0){rcache[key]=v;return v}}catch(e){}}
+ throw new Error("The road routing services could not be reached. Check your connection and try again.");
+}
+function fillTrip(){
+ const own=allIce().filter(c=>c.own),typ=allIce().filter(c=>c.typical),pop=allIce().filter(c=>!c.own&&!c.typical);
+ const og=(label,L,f)=>L.length?`<optgroup label="${esc(label)}">${L.map(f).join("")}</optgroup>`:"";
+ const opt=c=>`<option value="${esc(c.id)}">${esc(iceLabel(c))}</option>`;
+ const iceHtml=og("My cars",own,opt)+og("Typical cars",typ,opt)+og("Popular cars",pop,opt);
+ $("t_car").innerHTML=iceHtml;$("w_car").innerHTML=iceHtml;
+ const c=selCar();if(c){S.t.car=c.id;$("t_car").value=c.id;$("w_car").value=c.id;$("t_mpg").value=c.mpg;$("t_fuelname").textContent=fname(c.fuel)}
+ const ownE=allEvs().filter(e=>e.own),evopt=e=>`<option value="${esc(e.id)}">${esc(e.name)}</option>`;
+ $("t_ev").innerHTML=og("My electric cars",ownE,evopt)+og("Popular electric cars",allEvs().filter(e=>!e.own),evopt);
+ const e=selEv();if(e){S.t.ev=e.id;$("t_ev").value=e.id;$("t_evmi").value=e.mi}
+ $("t_sup").innerHTML=sups().map(s=>`<option value="${esc(s.id)}">${esc(s.name)} (${s.cheap}p cheap, ${s.normal}p normal)</option>`).join("");
+ const su=selSup();if(su){S.t.sup=su.id;$("t_sup").value=su.id}
+ $("t_season").value=S.t.season||"nor";
+ $("c_fuel").innerHTML=cfg.fuels.map(f=>`<option value="${esc(f.id)}">${esc(f.name)}</option>`).join("");
+ $("t_name").value=S.t.name||"";$("t_from").value=S.t.from||"";$("t_to").value=S.t.to||"";$("t_ret").checked=!!S.t.ret;$("t_near").value=S.t.near||"start";
+ renderStops();
+ $("t_places").innerHTML=["Home","My location"].concat(placesList().map(p=>p.n)).map(n=>`<option value="${esc(n)}">`).join("");
+ $("s_pc").value=S.pc||"";
+ const myIce=S.cars.filter(c=>c.kind!=="ev"),myEv=S.cars.filter(c=>c.kind==="ev");
+ $("icelist").innerHTML=myIce.length?myIce.map(c=>`<div class="li"><div>${esc(c.name)}<small>${esc(c.mpg+" mpg, "+fname(c.fuel))}</small></div><button class="btn warn sm" data-delcar="${esc(c.id)}" type="button">Delete</button></div>`).join(""):"<p class='note'>No cars of your own yet. Pick one from the car list in step 2, or add yours below.</p>";
+ $("evlist").innerHTML=myEv.length?myEv.map(c=>`<div class="li"><div>${esc(c.name)}<small>${esc(c.mi+" miles per kWh")}</small></div><button class="btn warn sm" data-delcar="${esc(c.id)}" type="button">Delete</button></div>`).join(""):"<p class='note'>No electric cars of your own yet. Step 2 already lists about 40 popular ones.</p>";
+ const pl=placesList();
+ $("placelist").innerHTML=pl.length?pl.map(p=>`<div class="li"><div>${esc(p.n)}<small>${esc(p.p)}${p.suggested?" (suggested)":""}</small></div>${p.suggested?"":`<button class="btn warn sm" data-delplace="${esc(p.n)}" type="button">Delete</button>`}</div>`).join(""):"<p class='note'>No places yet.</p>";
+ renderTrips();
+}
+function renderStops(){
+ $("stops").innerHTML=S.t.stops.map((s,i)=>`<label for="stop${i}">Stop ${i+1}</label><div class="row nw"><input id="stop${i}" data-stop="${i}" list="t_places" autocomplete="off" autocapitalize="characters" value="${esc(s)}"><button class="btn warn sm" data-delstop="${i}" type="button">Remove</button></div>`).join("");
+ $("addstop").hidden=S.t.stops.length>=2;
+}
+function keepT(){S.t=Object.assign(S.t,{name:$("t_name").value,from:$("t_from").value,to:$("t_to").value,ret:$("t_ret").checked,car:$("t_car").value||S.t.car,near:$("t_near").value,ev:$("t_ev").value||S.t.ev,sup:$("t_sup").value||S.t.sup,season:$("t_season").value});
+ S.t.stops=[...document.querySelectorAll("#stops input")].map(i=>i.value);save()}
+["t_name","t_from","t_to"].forEach(id=>$(id).addEventListener("input",keepT));
+$("stops").addEventListener("input",keepT);
+$("addstop").onclick=()=>{keepT();if(S.t.stops.length<2){S.t.stops.push("");save();renderStops();toast("✓ Stop added");const i=document.getElementById("stop"+(S.t.stops.length-1));if(i)i.focus()}};
+$("t_ret").onchange=()=>{keepT();toast($("t_ret").checked?"✓ Return trip on":"✓ Return trip off");if(TR)tripGo(false)};
+$("t_near").onchange=()=>{keepT();toast("✓ Prices near: "+($("t_near").value==="here"?"where I am now":"the start"));if(TR)tripGo(false)};
+$("t_car").onchange=()=>{keepT();const c=selCar();fillTrip();toast("✓ Car: "+(c?c.name:""));if(TR)tripGo(false)};
+$("t_mpg").onchange=()=>{const c=selCar(),v=parseFloat($("t_mpg").value);if(!c||!(v>=5&&v<=200)){toast("Miles per gallon should be between 5 and 200",true);fillTrip();return}
+ const mine=S.cars.find(x=>x.id===c.id);if(mine){mine.mpg=v;mine.u=Date.now()}else S.mpgo[c.id]=v;save();scheduleSync();toast("✓ Saved: "+c.name+" at "+v+" mpg");blur();renderTripIfAny()};
+$("t_ev").onchange=()=>{keepT();const e=selEv();fillTrip();toast("✓ Electric car: "+(e?e.name:""));renderTripIfAny()};
+$("t_evmi").onchange=()=>{const e=selEv(),v=parseFloat($("t_evmi").value);if(!e||!(v>=0.5&&v<=10)){toast("Miles per kWh should be between 0.5 and 10",true);fillTrip();return}
+ const mine=S.cars.find(x=>x.id===e.id);if(mine){mine.mi=v;mine.u=Date.now()}else S.evo[e.id]=v;save();scheduleSync();toast("✓ Saved: "+e.name+" at "+v+" miles per kWh");blur();renderTripIfAny()};
+$("t_season").onchange=()=>{keepT();toast("✓ Season: "+SEAS.find(x=>x[0]===$("t_season").value)[1]);renderTripIfAny()};
+$("t_sup").onchange=()=>{keepT();const s=selSup();toast("✓ Tariff: "+(s?s.name:""));renderTripIfAny()};
+$("t_here").onclick=()=>{$("t_from").value="My location";keepT();toast("✓ Start set to your location")};
+
+async function resolvePoint(txt){
+ const t=String(txt||"").trim(),k=t.toLowerCase();
+ if(!t)throw new Error("Type a postcode or nickname in From, To and any stop you added.");
+ if(/^(my location|here|current location|gps)$/.test(k)){return{g:await locate(false),label:"My location",here:true}}
+ let pc,label=t;
+ const pl=placesList().find(p=>p.n.toLowerCase()===k);
+ if(pl){pc=pl.p;label=pl.n}
+ else if(k==="home"){if(!validPc(S.pc))throw new Error("Save your home postcode first (Settings, Home).");pc=S.pc;label="Home"}
+ else if(validPc(t)){pc=normPc(t);label=pc}
+ else throw new Error("“"+t+"” is not a postcode or one of your nicknames.");
+ return{g:await geocode(pc),label,pc};
+}
+/* the three cheapest stations near a point, widening the search (5, 10, then 25 miles) until there are three */
+async function nearThree(c,fuel){
+ let st=[];
+ for(const mi of [5,10,25]){
+  const r=await tfetch(SYNC_URL+"/v1/chintzy/near?fuel="+fuel+"&mi="+mi+"&lat="+c.lat.toFixed(2)+"&lon="+c.lon.toFixed(2),20000);
+  if(r.status===503)throw new Error("The prices are still loading on the server.");
+  if(!r.ok)throw new Error("service "+r.status);
+  st=(await r.json()).stations;if(st.length>=3)break;
+ }
+ return st.slice(0,3).map(x=>({name:x.name,postcode:x.postcode,ppl:x.ppl,miles:hav(c.lat,c.lon,x.lat,x.lon)}));
+}
+let TR=null,tbusy=false;
+async function tripGo(manual){
+ if(tbusy)return;
+ keepT();
+ const car=selCar(),m=$("t_msg");
+ if(!car){m.textContent="Pick a car first.";return}
+ tbusy=true;m.textContent="Finding the road distance...";
+ try{
+  const raw=[$("t_from").value].concat(S.t.stops.filter(x=>x.trim()),[$("t_to").value]);
+  const pts=[];for(const x of raw)pts.push(await resolvePoint(x));
+  let one=0;const legs=[];
+  for(let i=0;i<pts.length-1;i++){const d=await roadMiles(pts[i].g,pts[i+1].g);legs.push(d);one+=d}
+  m.textContent="Finding the cheapest petrol...";
+  let opts=[],note="",cen=pts[0].g,nearLabel=pts[0].here?"your location":"the start ("+pts[0].label+")";
+  try{if($("t_near").value==="here"){cen=await locate(false);nearLabel="where you are now"}opts=await nearThree(cen,car.fuel);if(!opts.length)note="No stations with a "+fname(car.fuel)+" price within 25 miles of "+nearLabel+". Type your own price below."}
+  catch(e){note="Could not get live prices ("+(e&&e.message?e.message:"no connection")+"). Type your own price below."}
+  const key=pts.map(p=>p.label).join("|"),keep=TR&&TR.key===key&&TR.own;
+  TR={key,pts,legs,from:pts[0].label,to:pts[pts.length-1].label,via:pts.slice(1,-1).map(p=>p.label).join(", "),ret:$("t_ret").checked,one,opts,note,nearLabel,sel:opts.length?0:-1,own:keep||""};
+  if(!opts.length)TR.sel=-1;
+  renderTrip();m.textContent="";
+  if(manual){toast("✓ Cost worked out");blur();$("costcard").scrollIntoView({behavior:"smooth",block:"start"})}
+ }catch(e){m.textContent=e&&e.message?e.message:"No connection.";if(manual)toast("Could not work out the cost",true)}
+ finally{tbusy=false}
+}
+const renderTripIfAny=()=>{if(TR){TR.ret=$("t_ret").checked;renderTrip()}};
+/* every number on the results card comes from here */
+function figs(){
+ const car=selCar(),ev=selEv(),su=selSup(),season=S.t.season||"nor";
+ const miles=TR.one*(TR.ret?2:1),litres=miles/car.mpg*GAL;
+ const ppl=TR.sel>=0&&TR.opts[TR.sel]?TR.opts[TR.sel].ppl:(parseFloat(TR.own)||0);
+ const kwh=miles/(ev.mi*EVF[season]);
+ return{car,ev,su,season,miles,litres,ppl,petrol:ppl?litres*ppl/100:0,kwh,c1:kwh*su.cheap/100,c2:kwh*su.normal/100};
+}
+function renderTrip(){
+ if(!TR)return;
+ const F=figs();TR.F=F;
+ $("tr_head").textContent=(($("t_name").value||"").trim()||TR.from+" to "+TR.to);
+ const seasonName=SEAS.find(x=>x[0]===F.season)[1];
+ let h=`<div class="tiles"><div class="tile pet"><small>${esc(F.car.fuel==="diesel"?"Diesel":"Petrol")} cost</small><div class="v" id="tr_pet">${F.ppl?gbp(F.petrol):"Choose a price"}</div></div><div class="tile ev"><small>Electric, cheap rate</small><div class="v">${gbp(F.c1)}</div></div><div class="tile ev"><small>Electric, normal rate</small><div class="v">${gbp(F.c2)}</div></div></div>`;
+ h+=`<div class="sum" style="margin-bottom:10px"><div><small>Road miles${TR.ret?" (there and back)":""}</small><span class="big">${F.miles.toFixed(1)}</span></div><div><small>Litres of ${esc(fname(F.car.fuel))}</small><span class="big">${F.litres.toFixed(1)}</span></div><div><small>kWh used</small><span class="big">${F.kwh.toFixed(1)}</span></div></div>`;
+ h+=`<p class="note" style="margin:0 0 8px">${esc(F.car.name)} at ${F.car.mpg} mpg. ${TR.ret?"One way is "+TR.one.toFixed(1)+" miles. ":""}${TR.via?"Via "+esc(TR.via)+". ":""}Choose the petrol price to use:</p>`;
+ h+=TR.opts.map((o,i)=>`<label class="opt${TR.sel===i?" sel":""}" style="text-transform:none;letter-spacing:0;font-size:15px;color:var(--fg);margin:0 0 8px"><input type="radio" name="tp" value="${i}"${TR.sel===i?" checked":""}><div><span class="nm">${esc(o.name)}</span>${i===0?'<span class="tag">Cheapest</span>':""}<small>${esc(o.postcode||"")} · ${o.miles.toFixed(1)} mi from ${esc(TR.nearLabel)}</small></div><div class="pc">${o.ppl.toFixed(1)}p<small>${gbp(F.litres*o.ppl/100)}</small></div></label>`).join("");
+ h+=`<label class="opt${TR.sel===-1?" sel":""}" style="text-transform:none;letter-spacing:0;font-size:15px;color:var(--fg);margin:0 0 8px"><input type="radio" name="tp" value="own"${TR.sel===-1?" checked":""}><div><span class="nm">My own price</span><small>Pence per litre${catalog&&catalog.fuel&&catalog.fuel.ppl&&F.car.fuel==="unleaded"?" (average near Andover about "+catalog.fuel.ppl+"p)":""}</small></div><div><input id="tr_own" type="number" inputmode="decimal" step="0.1" min="50" max="400" placeholder="e.g. 145.9" value="${esc(TR.own)}" style="width:110px"></div></label>`;
+ if(TR.note)h+=`<p class="note">${esc(TR.note)}</p>`;
+ if(TR.opts.length>1){const lo=TR.opts[0].ppl,hi=TR.opts[TR.opts.length-1].ppl;if(hi-lo>=0.5)h+=`<p class="note">The cheapest of these saves ${gbp(F.litres*(hi-lo)/100)} against the dearest of the three.</p>`}
+ if(F.ppl){const s1=F.petrol-F.c1,s2=F.petrol-F.c2;
+  h+=`<p style="margin:10px 0 6px"><b>${esc(F.ev.name)}</b> (${F.ev.mi} mi/kWh, ${esc(seasonName.toLowerCase())}) would cost <b class="ev" style="color:var(--good)">${gbp(F.c1)}</b> on the cheap rate (${s1>=0?"saving "+gbp(s1):"dearer by "+gbp(-s1)}) or <b style="color:var(--good)">${gbp(F.c2)}</b> on the normal rate (${s2>=0?"saving "+gbp(s2):"dearer by "+gbp(-s2)}).</p>`}
+ h+=`<div class="tblwrap"><table><tr><th>Electric tariff</th><th>Cheap rate</th><th>Normal rate</th></tr>${sups().map(s=>`<tr${s.id===F.su.id?' class="sel"':""}><td style="white-space:normal">${esc(s.name)}</td><td class="g">${gbp(F.kwh*s.cheap/100)}</td><td class="g">${gbp(F.kwh*s.normal/100)}</td></tr>`).join("")}</table></div>`;
+ h+=`<p class="note">Petrol prices are from the government Fuel Finder data; the electric figures use my estimates of real-world miles per kWh, so overtype them. ${TR.ret?"The return trip assumes the same road back. ":""}Fuel and electricity only.</p>`;
+ $("tr_body").innerHTML=h;
+ $("tr_actions").hidden=false;
+ $("t_maps").href=mapsLink();$("t_wa").href="https://wa.me/?text="+encodeURIComponent(shareText());
+}
+const mapPt=p=>p.here?p.g.lat.toFixed(5)+","+p.g.lon.toFixed(5):(p.pc||p.label);
+function mapsLink(){const P=TR.pts.map(mapPt),e=encodeURIComponent;let u="https://www.google.com/maps/dir/?api=1&travelmode=driving&origin="+e(P[0])+"&destination="+e(P[P.length-1]);if(P.length>2)u+="&waypoints="+e(P.slice(1,-1).join("|"));return u}
+function shareText(){const F=TR.F;return `MyICE journey: ${TR.from}${TR.via?" via "+TR.via:""} to ${TR.to}${TR.ret?" and back":""}, ${F.miles.toFixed(1)} road miles.\n${F.car.name} (${F.car.mpg} mpg): ${F.ppl?gbp(F.petrol)+" of "+fname(F.car.fuel)+" at "+F.ppl.toFixed(1)+"p":"choose a price"}.\n${F.ev.name}: ${gbp(F.c1)} on a cheap rate, ${gbp(F.c2)} on the normal rate (${F.su.name}).\nWorked out with MyICE: ${APP_URL}`}
+$("tr_body").addEventListener("change",e=>{
+ if(!TR||e.target.name!=="tp")return;
+ TR.sel=e.target.value==="own"?-1:+e.target.value;renderTrip();
+ toast("✓ Price chosen: "+(TR.sel>=0?TR.opts[TR.sel].name+" "+TR.opts[TR.sel].ppl.toFixed(1)+"p":"your own price"));
+});
+$("tr_body").addEventListener("input",e=>{
+ if(!TR||e.target.id!=="tr_own")return;
+ TR.own=e.target.value;TR.sel=-1;
+ const F=figs();TR.F=F;$("tr_pet").textContent=F.ppl?gbp(F.petrol):"Choose a price";
+ document.querySelectorAll("#tr_body label.opt").forEach((el,i,L)=>el.classList.toggle("sel",i===L.length-1));
+ const r=document.querySelector('#tr_body input[value="own"]');if(r)r.checked=true;
+});
+$("t_go").onclick=()=>tripGo(true);
+
+/* ---------- saved journeys ---------- */
+let selTrip="";
+$("t_save").onclick=()=>{
+ if(!TR){return}
+ keepT();const F=TR.F||figs();
+ const name=($("t_name").value||"").trim();
+ const t={id:uid(),u:Date.now(),date:new Date().toISOString(),name,from:TR.from,to:TR.to,via:TR.via,ret:TR.ret,miles:F.miles,car:F.car.name,mpg:F.car.mpg,fuel:F.car.fuel,ppl:F.ppl,litres:F.litres,petrol:F.petrol,
+  ev:F.ev.name,evmi:F.ev.mi,season:F.season,kwh:F.kwh,sup:F.su.name,cheapP:F.su.cheap,normP:F.su.normal,c1:F.c1,c2:F.c2,
+  pts:[$("t_from").value].concat(S.t.stops.filter(x=>x.trim()),[$("t_to").value])};
+ if(!F.ppl){toast("Choose a petrol price first",true);return}
+ S.trips.unshift(t);S.trips=S.trips.slice(0,300);selTrip=t.id;save();renderTrips();scheduleSync();
+ toast("✓ Journey saved"+(name?": "+name:""));blur();
+};
+function renderTrips(){
+ const T=S.trips,sum=f=>T.reduce((a,t)=>a+(+f(t)||0),0);
+ $("sumbox").innerHTML=[["Journeys",T.length],["Miles",sum(t=>t.miles).toFixed(0)],["Petrol and diesel",gbp(sum(t=>t.petrol))],["Electric, cheap",gbp(sum(t=>t.c1))],["Electric, normal",gbp(sum(t=>t.c2))],["EV would save",gbp(sum(t=>t.petrol-t.c1))]].map(([a,b])=>`<div><small>${a}</small><span class="big">${b}</span></div>`).join("");
+ const short=s=>String(s||"").trim()||"?";
+ $("tripsum").textContent=T.length?`Recent journeys (${T.length}${T.some(x=>x.fav)?", "+T.filter(x=>x.fav).length+" favourite":""}): latest ${T[0].name||(short(T[0].from)+" to "+short(T[0].to))}, ${(+T[0].miles).toFixed(0)} mi`:"Recent journeys (none yet)";
+ const ordered=T.slice().sort((a,b)=>(b.fav?1:0)-(a.fav?1:0));
+ const ds=t=>new Date(t.date).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"});
+ $("triplist").innerHTML=T.length?`<label for="tripsel" style="margin-top:0">Pick a journey (${T.length} saved)</label><select id="tripsel">${ordered.map(t=>`<option value="${esc(t.id)}">${t.fav?"★ ":""}${t.name?esc(t.name)+" · ":""}${esc(short(t.from))} to ${esc(short(t.to))} · ${esc(t.car)}</option>`).join("")}</select><div id="tripdet" style="margin-top:10px"></div>`:`<p class="note">No journeys saved yet. Press Save journey to keep one here.</p>`;
+ if(!T.length)return;
+ if(selTrip&&T.find(x=>x.id===selTrip))$("tripsel").value=selTrip;
+ const show=()=>{const t=T.find(x=>x.id===$("tripsel").value);if(!t)return;selTrip=t.id;
+  $("tripdet").innerHTML=`<div class="tblwrap"><table>${t.name?`<tr><td>Name</td><td style="white-space:normal">${esc(t.name)}</td></tr>`:""}<tr><td>Route</td><td style="white-space:normal">${esc(short(t.from))}${t.via?" via "+esc(t.via):""} to ${esc(short(t.to))}</td></tr>
+   <tr><td>Car</td><td style="white-space:normal">${esc(t.car)} (${t.mpg} mpg)</td></tr><tr><td>Date</td><td>${ds(t)}</td></tr>
+   <tr><td>Distance</td><td>${(+t.miles).toFixed(1)} road miles${t.ret?", return":", one way"}</td></tr>
+   <tr><td>Fuel</td><td>${(+t.litres).toFixed(1)} litres of ${esc(fname(t.fuel))} at ${(+t.ppl).toFixed(1)}p</td></tr>
+   <tr><td>Petrol or diesel car</td><td class="p">${gbp(t.petrol)}</td></tr>
+   <tr><td>${esc(t.ev)}</td><td style="white-space:normal">${(+t.kwh).toFixed(1)} kWh, ${esc(t.season==="sum"?"summer":t.season==="win"?"winter":"normal")}</td></tr>
+   <tr><td>Electric, cheap rate</td><td class="g">${gbp(t.c1)}</td></tr><tr><td>Electric, normal rate</td><td class="g">${gbp(t.c2)}</td></tr>
+   <tr><td>Electric would save</td><td class="g">${gbp(t.petrol-t.c1)} cheap, ${gbp(t.petrol-t.c2)} normal</td></tr></table></div>
+   <div class="row" style="margin-top:10px"><button class="btn alt sm" id="favtrip" type="button">${t.fav?"★ Remove from favourites":"☆ Add to favourites"}</button>${t.pts?`<button class="btn alt sm" id="loadtrip" type="button">Load and edit</button>`:""}<button class="btn warn sm" id="deltrip" type="button">Delete this journey</button></div>`;
+  $("favtrip").onclick=()=>{t.fav=!t.fav;t.u=Date.now();save();renderTrips();scheduleSync();toast(t.fav?"✓ Added to favourites":"✓ Removed from favourites")};
+  $("deltrip").onclick=()=>{S.tomb[t.id]=Date.now();S.trips=S.trips.filter(x=>x.id!==t.id);save();renderTrips();scheduleSync();toast("✓ Journey deleted")};
+  if($("loadtrip"))$("loadtrip").onclick=()=>{const c=allIce().find(x=>x.name===t.car);
+   S.t=Object.assign(S.t,{name:t.name||"",from:t.pts[0]||"",to:t.pts[t.pts.length-1]||"",stops:t.pts.slice(1,-1),ret:!!t.ret,car:c?c.id:S.t.car});save();fillTrip();toast("✓ Journey loaded into step 1");window.scrollTo({top:0,behavior:"smooth"});tripGo(true)};
+ };
+ $("tripsel").onchange=show;show();
+};
+let clearArm=false;
+$("clear").onclick=()=>{if(!clearArm){clearArm=true;$("clear").textContent="Press again to delete all";setTimeout(()=>{clearArm=false;$("clear").textContent="Clear all journeys"},4000);return}
+ S.trips.forEach(t=>{S.tomb[t.id]=Date.now()});S.trips=[];save();clearArm=false;$("clear").textContent="Clear all journeys";renderTrips();scheduleSync();toast("✓ All journeys cleared")};
+
+/* ---------- settings: home, cars, places ---------- */
+$("s_pcsave").onclick=()=>{const pc=normPc($("s_pc").value);if(!validPc(pc)){toast("That postcode does not look right",true);return}S.pc=pc;save();fillTrip();alertUI();syncAlerts(true);toast("✓ Home saved: "+pc);blur()};
+$("c_save").onclick=()=>{
+ const name=$("c_name").value.trim().slice(0,40),mpg=parseFloat($("c_mpg").value),fuel=$("c_fuel").value;
+ if(!name||!(mpg>=5&&mpg<=200)){toast("Give the car a name and its miles per gallon (5 to 200)",true);return}
+ const c={id:"u"+uid(),kind:"ice",name,mpg:Math.round(mpg*10)/10,fuel,u:Date.now()};
+ S.cars=S.cars.filter(x=>!(x.kind!=="ev"&&x.name.toLowerCase()===name.toLowerCase()));S.cars.unshift(c);S.t.car=c.id;save();fillTrip();scheduleSync();
+ $("c_name").value="";$("c_mpg").value="";toast("✓ Car saved: "+name);blur();renderTripIfAny();
+};
+$("e_save").onclick=()=>{
+ const name=$("e_name").value.trim().slice(0,40),mi=parseFloat($("e_mi").value);
+ if(!name||!(mi>=0.5&&mi<=10)){toast("Give the electric car a name and its miles per kWh (0.5 to 10)",true);return}
+ const c={id:"v"+uid(),kind:"ev",name,mi:Math.round(mi*100)/100,u:Date.now()};
+ S.cars=S.cars.filter(x=>!(x.kind==="ev"&&x.name.toLowerCase()===name.toLowerCase()));S.cars.unshift(c);S.t.ev=c.id;save();fillTrip();scheduleSync();
+ $("e_name").value="";$("e_mi").value="";toast("✓ Electric car saved: "+name);blur();renderTripIfAny();
+};
+$("p_save").onclick=()=>{
+ const n=$("p_name").value.trim().slice(0,20),pc=normPc($("p_pc").value);
+ if(!n||/^(home|my location|here)$/i.test(n)){toast("Choose a nickname (not Home or My location)",true);return}
+ if(!validPc(pc)){toast("That postcode does not look right",true);return}
+ Object.keys(S.places).forEach(k=>{if(k.toLowerCase()===n.toLowerCase())delete S.places[k]});
+ S.places[n]={n,p:pc,u:Date.now()};save();fillTrip();scheduleSync();$("p_name").value="";$("p_pc").value="";toast("✓ Place saved: "+n+" = "+pc);blur();
+};
+let armed="";
+document.addEventListener("click",e=>{
+ const b=e.target.closest("button");if(!b)return;
+ const d=b.dataset;
+ const del=(attr,label,fn)=>{if(armed!==attr+d[attr]){armed=attr+d[attr];const o=b.textContent;b.textContent="Tap again to delete";setTimeout(()=>{if(armed===attr+d[attr]){armed="";b.textContent=o}},3500);return}armed="";fn();fillTrip();scheduleSync();toast("✓ Deleted: "+label)};
+ if(d.delstop!==undefined){keepT();S.t.stops.splice(+d.delstop,1);save();renderStops();toast("✓ Stop removed")}
+ if(d.delcar){const c=S.cars.find(x=>x.id===d.delcar);del("delcar",c?c.name:"car",()=>{S.ctomb[d.delcar]=Date.now();S.cars=S.cars.filter(x=>x.id!==d.delcar);if(S.t.car===d.delcar)S.t.car="";if(S.t.ev===d.delcar)S.t.ev="e:1";save()})}
+ if(d.delplace)del("delplace",d.delplace,()=>{S.ptomb[d.delplace]=Date.now();delete S.places[d.delplace];save()});
+});
+
+/* =====================================================================
+   SHARING WITH FAMILY (same service and rules as MyEV; MyICE groups are separate)
+   ===================================================================== */
+let syncing=false,syncTimer=null,inviteExp=0;
+function ensureDevice(){if(!S.sync.device||!S.sync.token){S.sync.device=rid(16);S.sync.token=rid(32);save()}}
+async function api(path,extra){
+ ensureDevice();const c=new AbortController();const t=setTimeout(()=>c.abort(),10000);
+ try{const res=await fetch(SYNC_URL+path,{method:"POST",headers:{"Content-Type":"application/json"},cache:"no-store",signal:c.signal,body:JSON.stringify(Object.assign({device:S.sync.device,token:S.sync.token},extra||{}))});
+  let j={};try{j=await res.json()}catch(e){}return{ok:res.ok,status:res.status,data:j}}
+ finally{clearTimeout(t)}
+}
+const ERR={already_sharing:"This device is already in a sharing group. Leave it first if you want to start or join another.",bad_code:"That code is not right, or it has run out (codes last 10 minutes). Ask for a new code.",group_full:"That group is already full, so nobody else can join it.",too_many_tries:"Too many wrong codes. Please wait an hour before trying again.",not_a_member:"This device is no longer part of the group.",slow_down:"Please wait a moment and try again.",full:"The sharing service is full at the moment.",bad_size:"Choose a group size between 2 and 10.",wrong_app:"That code is for a MyEV group. Join it in MyEV instead."};
+function syncMsg(t){$("syncstatus").textContent=t}
+function applyGroup(g){if(!g)return;S.sync.name=g.name||"";S.sync.cap=g.cap;S.sync.members=g.members;if(g.invite){inviteExp=Date.now()+g.inviteSeconds*1000;$("invitecode").textContent=g.invite}else{inviteExp=0}save();renderShare()}
+function renderShare(){
+ const on=!!S.sync.space;$("shareoff").hidden=on;$("shareon").hidden=!on;
+ $("sharestat").textContent=on?((S.sync.name?"“"+S.sync.name+"”. ":"")+(S.sync.members>=S.sync.cap?"Sharing with "+(S.sync.members-1)+" other "+(S.sync.members-1===1?"person":"people")+". Your group is full ("+S.sync.members+" of "+S.sync.cap+"), so nobody else can join.":"Sharing: "+S.sync.members+" of "+S.sync.cap+" places filled. "+(S.sync.cap-S.sync.members)+" more can join.")):"Not sharing. Start a group, or join one with a code.";
+ if(on&&document.activeElement!==$("gname"))$("gname").value=S.sync.name||"";
+ const open=on&&inviteExp>Date.now()&&S.sync.members<S.sync.cap;$("invitebox").hidden=!open;$("newinvite").hidden=!(on&&S.sync.members<S.sync.cap);
+ if(open){const sec=Math.max(0,Math.round((inviteExp-Date.now())/1000));$("invitesecs").textContent=Math.floor(sec/60)+":"+String(sec%60).padStart(2,"0")+" more minutes"}
+}
+setInterval(()=>{if(inviteExp)renderShare()},1000);
+function scheduleSync(){if(!S.sync.space)return;clearTimeout(syncTimer);syncTimer=setTimeout(()=>syncNow(false),1500)}
+const carsObj=()=>{const o={};S.cars.forEach(c=>{o[c.id]=c});return o};
+async function syncNow(manual){
+ if(!S.sync.space){if(manual)syncMsg("You are not sharing yet.");return}
+ if(!navigator.onLine){syncMsg("You are offline. Your changes are kept on this device and will sync when you are back online.");return}
+ if(syncing)return;syncing=true;syncMsg("Syncing...");
+ try{
+  const r=await api("/v1/sync",{space:S.sync.space,trips:S.trips,places:S.places,cars:carsObj(),tomb:S.tomb,ptomb:S.ptomb,ctomb:S.ctomb});
+  if(r.status===403){S.sync.space="";S.sync.cap=0;S.sync.members=0;save();renderShare();syncMsg(ERR.not_a_member+" Your journeys are still on this device.");syncing=false;return}
+  if(!r.ok)throw new Error("server "+r.status);
+  const had=new Set(S.trips.map(x=>x.id));const j=r.data;S.trips=Array.isArray(j.trips)?j.trips:S.trips;const fresh=S.trips.filter(x=>!had.has(x.id)).length;
+  if(j.places&&typeof j.places==="object")S.places=j.places;
+  if(j.cars&&typeof j.cars==="object")S.cars=Object.keys(j.cars).map(k=>j.cars[k]);
+  S.tomb=j.tomb||S.tomb;S.ptomb=j.ptomb||S.ptomb;S.ctomb=j.ctomb||S.ctomb;
+  save();fillTrip();applyGroup(j.group);
+  syncMsg("Synced "+new Date().toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})+". "+S.trips.length+" journeys, "+Object.keys(S.places).length+" places and "+S.cars.length+" cars shared.");
+  if(fresh)toast("✓ "+fresh+" new journey"+(fresh>1?"s":"")+" from your group");else if(manual)toast("✓ Synced with your group");
+ }catch(e){syncMsg("The sharing server did not answer. Your changes are kept on this device and will sync later.")}
+ syncing=false;
+}
+async function shareCall(path,extra,okFn){
+ if(!navigator.onLine){syncMsg("You need a connection for this. Try again when you are online.");return}
+ syncMsg("Working...");
+ try{const r=await api(path,extra);
+  if(!r.ok){syncMsg(ERR[r.data&&r.data.error]||"That did not work ("+r.status+"). Please try again.");return}
+  okFn(r.data)}
+ catch(e){syncMsg("No answer from the sharing server. Try again when you have a connection.")}
+}
+$("sharestart").onclick=()=>shareCall("/v1/create",{cap:+$("sharecap").value,name:$("sharename").value.trim(),app:"ice"},d=>{S.sync.space=d.space;applyGroup(d);syncMsg("Sharing started. Give the code to the person you are adding.");toast("✓ Sharing started. Now send the code.");syncNow(false)});
+$("sharejoin").onclick=()=>{const c=$("joincode").value.replace(/\D/g,"");if(c.length!==4){syncMsg("Type the 4 digits you were given.");return}
+ shareCall("/v1/join",{code:c,app:"ice"},d=>{S.sync.space=d.space;$("joincode").value="";applyGroup(d);syncMsg("Joined. Syncing now...");toast("✓ Joined the group");syncNow(false)})};
+$("newinvite").onclick=()=>shareCall("/v1/invite",{space:S.sync.space},d=>{applyGroup(d);syncMsg("Here is a new code.");toast("✓ New code made")});
+$("syncnow").onclick=()=>syncNow(true);
+$("gnamesave").onclick=()=>{const n=$("gname").value.trim();shareCall("/v1/rename",{space:S.sync.space,name:n},d=>{applyGroup(d);toast(n?"✓ Group named: "+n:"✓ Group name cleared")})};
+function openShare(){const d=$("setbox");d.open=true;$("sharestat").scrollIntoView({behavior:"smooth",block:"start"});setTimeout(()=>{if(!S.sync.space)try{$("joincode").focus()}catch(e){}},600)}
+$("sendcode").onclick=()=>{const code=($("invitecode").textContent||"").trim();if(!/^\d{4}$/.test(code)){toast("No code yet. Press New code first.",true);return}
+ const msg="Join my MyICE journeys. Tap this link, check the 4 digits are in the box, then tap Join. The code works for 10 minutes. "+APP_URL+"?join="+code+" (code "+code+")";
+ window.open("https://wa.me/?text="+encodeURIComponent(msg),"_blank");toast("WhatsApp is opening with the code ready to send")};
+function joinLink(){const m=/[?&]join=(\d{4})/.exec(location.search);if(!m)return;try{history.replaceState(null,"",location.pathname)}catch(e){}
+ if(S.sync.space){toast("This device is already sharing");return}
+ setTab("t");openShare();$("joincode").value=m[1];syncMsg("The code "+m[1]+" is in the box. Tap Join.");toast("Code filled in. Tap Join.")}
+let leaveArm=0,endArm=0;
+$("leavegrp").onclick=()=>{if(!leaveArm){leaveArm=1;$("leavegrp").textContent="Press again to leave";setTimeout(()=>{leaveArm=0;$("leavegrp").textContent="Leave this group"},4000);return}
+ leaveArm=0;$("leavegrp").textContent="Leave this group";shareCall("/v1/leave",{space:S.sync.space},()=>{S.sync.space="";S.sync.cap=0;S.sync.members=0;inviteExp=0;save();renderShare();syncMsg("You left the group. Your journeys stay on this device.");toast("✓ You left the group")})};
+$("disbandgrp").onclick=()=>{if(!endArm){endArm=1;$("disbandgrp").textContent="Press again: this removes everyone";setTimeout(()=>{endArm=0;$("disbandgrp").textContent="End sharing for everyone"},4000);return}
+ endArm=0;$("disbandgrp").textContent="End sharing for everyone";shareCall("/v1/disband",{space:S.sync.space},()=>{S.sync.space="";S.sync.cap=0;S.sync.members=0;inviteExp=0;save();renderShare();syncMsg("Sharing ended for everyone. Each person keeps their own journeys.");toast("✓ Sharing ended for everyone")})};
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)scheduleSync()});
+setInterval(()=>{if(!document.hidden)scheduleSync()},90000);
+
+/* =====================================================================
+   CHEAPEST PETROL (the station finder) AND PRICE-DROP ALERTS
+   ===================================================================== */
+function fillFuels(){
+ const opts=cfg.fuels.map(f=>`<option value="${esc(f.id)}">${esc(f.name)}</option>`).join("");
+ $("fuel").innerHTML=opts;
+ if(!cfg.fuels.some(f=>f.id===S.fuel))S.fuel=cfg.fuels[0]?cfg.fuels[0].id:"unleaded";
+ $("fuel").value=S.fuel;
+}
+function showPrefs(){$("pc").value=S.pc;$("fuel").value=S.fuel;$("mi").value=String(S.mi);$("mind").value=String(S.mind)}
+let cur=null,busy=false;
+function render(d,g,saved){
+ cur={d,g,saved,got:saved||Date.now()};
+ const name=fname(d.fuel);
+ $("reshead").textContent="Cheapest "+name+" within "+d.mi+" miles of "+(S.mode==="here"?"your location":(S.pc||"you"));
+ if(!d.stations.length){$("res").innerHTML="<p class='note'>No stations with a "+esc(name)+" price within "+d.mi+" miles. Try a bigger distance.</p>";$("savenote").textContent="";tickAge();return}
+ $("res").innerHTML=d.stations.map((x,i)=>{
+  const mi=hav(g.lat,g.lon,x.lat,x.lon);
+  const dir="https://www.google.com/maps/dir/?api=1&destination="+x.lat+","+x.lon+"&travelmode=driving";
+  const when=x.when?" · price set "+ago(Date.now()-Date.parse(x.when)):"";
+  return `<div class="st${i===0?" top":""}"><div class="rk">${i+1}</div><div><div class="nm">${esc(x.name)}${i===0?'<span class="tag">Cheapest</span>':""}</div><small>${esc(x.postcode||"")} · ${mi.toFixed(1)} mi${esc(when)}</small></div><div class="pr">${x.ppl.toFixed(1)}p</div><div class="go"><a class="btn alt sm" href="${dir}" target="_blank" rel="noopener">Directions to ${esc(x.postcode||"station")}</a></div></div>`}).join("");
+ const f=d.stations[0],l=d.stations[d.stations.length-1],diff=l.ppl-f.ppl;
+ $("savenote").textContent=d.stations.length>1&&diff>=0.5?"The cheapest is "+diff.toFixed(1)+"p a litre below number "+d.stations.length+": about £"+(diff*0.5).toFixed(2)+" less on a 50-litre fill.":"";
+ tickAge();
+}
+function tickAge(){
+ const a=$("age");if(!cur){a.textContent="";return}
+ const age=(Date.now()/1000-cur.d.fetched)*1000;
+ let t="Prices checked "+ago(age)+" (refreshed every "+Math.round((cfg.interval||300)/60)+" min)";
+ if(cur.saved)t="Saved copy from "+ago(Date.now()-cur.saved)+": no connection, so these may be out of date";
+ a.textContent=t;a.className="age"+((cur.saved||age>20*60000)?" old":"");
+}
+setInterval(tickAge,20000);
+const hasTarget=()=>S.tab==="f"&&(S.mode==="here"||!!S.pc);
+async function find(manual){
+ if(busy)return;
+ const isHere=S.mode==="here";
+ const pc=isHere?"here":normPc($("pc").value||S.pc);
+ if(!isHere&&!validPc(pc)){if(manual){$("findmsg").textContent="That postcode does not look right. Check it and try again.";toast("Check the postcode",true)}return}
+ busy=true;if(manual)$("findmsg").textContent=isHere?"Finding your location...":"Looking up prices near "+pc+"...";
+ try{
+  const g=isHere?await locate(!manual):await geocode(pc);
+  if(isHere&&manual)$("findmsg").textContent="Looking up prices near you...";
+  const r=await tfetch(SYNC_URL+"/v1/chintzy/near?fuel="+S.fuel+"&mi="+S.mi+"&lat="+g.lat.toFixed(2)+"&lon="+g.lon.toFixed(2),20000);
+  if(r.status===503)throw new Error("The prices are still loading on the server. Try again in a minute.");
+  if(!r.ok)throw new Error("service "+r.status);
+  const d=await r.json();
+  if(!isHere)S.pc=pc;S.last=isHere?{pc,t:Date.now(),d}:{pc,t:Date.now(),d,g};save();render(d,g,0);
+  $("findmsg").textContent=manual?(isHere?"Using your current location. ":"")+"Found "+d.found+" station"+(d.found===1?"":"s")+" with a price. Showing the cheapest "+d.stations.length+".":"";
+  if(manual)toast(isHere?"✓ Prices updated near you":"✓ Saved "+pc+" and updated prices");blur();
+ }catch(e){
+  const L=S.last;
+  if(L&&L.pc===pc&&L.d&&L.d.fuel===S.fuel&&L.d.mi===S.mi&&(L.g||here)){render(L.d,L.g||here,L.t);$("findmsg").textContent="Could not get live prices ("+(e&&e.message&&!(e instanceof TypeError)?e.message:"no connection")+"). Showing your saved copy."}
+  else $("findmsg").textContent=(e&&e.message&&!(e instanceof TypeError)?e.message:"No connection.")+(e&&e.message&&/location|postcode not found/i.test(e.message)?(/postcode not found/i.test(e.message)?" Check the postcode and try again.":""):" Try again in a minute.");
+  if(manual)toast("Could not get prices",true);
+ }finally{busy=false}
+}
+$("find").onclick=()=>{const pc=normPc($("pc").value);if(!pc&&S.mode!=="here"){$("findmsg").textContent="Type your postcode first, then press the button.";toast("Type a postcode first",true);return}if(validPc(pc)){S.pc=pc;S.mode="pc";save()}else if(S.mode==="here"&&!pc){S.mode="pc"}find(true)};
+$("here").onclick=()=>{S.mode="here";save();find(true)};
+$("pc").addEventListener("keydown",e=>{if(e.key==="Enter")$("find").click()});
+$("fuel").onchange=()=>{S.fuel=$("fuel").value;save();toast("✓ Saved: "+fname(S.fuel));syncAlerts(true);find(false)};
+$("mi").onchange=()=>{S.mi=+$("mi").value;save();toast("✓ Saved: "+S.mi+" miles");syncAlerts(true);find(false)};
+setInterval(()=>{if(!document.hidden&&hasTarget()&&cur&&Date.now()-cur.got>(cfg.interval||300)*1000)find(false)},30000);
+document.addEventListener("visibilitychange",()=>{if(!document.hidden&&hasTarget()&&(!cur||Date.now()-cur.got>60000))find(false)});
+
+/* ---------- welcome ---------- */
+function showWelcome(){$("welcome").hidden=!!S.welcomed;if(!S.welcomed)$("w_pc").value=S.pc||""}
+$("w_save").onclick=()=>{const pc=normPc($("w_pc").value);
+ if(pc&&!validPc(pc)){$("w_msg").textContent="That postcode does not look right. Check it, or press Skip for now.";return}
+ S.pc=pc;S.t.car=$("w_car").value;const c=selCar();if(c&&FUELS.some(f=>f[0]===c.fuel))S.fuel=c.fuel;S.welcomed=true;save();$("welcome").hidden=true;showPrefs();fillTrip();toast("✓ Saved. Now type where you are going");blur()};
+$("w_skip").onclick=()=>{S.welcomed=true;save();$("welcome").hidden=true;toast("✓ Skipped. You can set it up in Settings")};
+
+/* ---------- price-drop alerts (Web Push) ---------- */
+const pushOK="serviceWorker" in navigator&&"PushManager" in window&&"Notification" in window;
+const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+const standalone=(window.matchMedia&&window.matchMedia("(display-mode: standalone)").matches)||navigator.standalone===true;
+const urlB64=s=>{const p="=".repeat((4-s.length%4)%4),b=(s+p).replace(/-/g,"+").replace(/_/g,"/"),r=atob(b);return Uint8Array.from(r,c=>c.charCodeAt(0))};
+let regP=null;function getReg(){if(!regP&&"serviceWorker" in navigator)regP=navigator.serviceWorker.ready;return regP}
+function alertUI(){
+ const info=$("alertinfo"),btn=$("alerttoggle"),tst=$("alerttest");
+ $("mind").disabled=false;
+ if(!pushOK){
+  btn.disabled=true;tst.hidden=true;
+  info.textContent=isIOS&&!standalone?"On iPhone, alerts only work once MyICE is on your Home Screen. Tap Share in Safari, then Add to Home Screen, then open MyICE from the new icon (needs iOS 16.4 or newer).":"This browser cannot receive alerts. On Android use Chrome; on iPhone add MyICE to the Home Screen first.";return}
+ btn.disabled=false;
+ if(Notification.permission==="denied"){btn.disabled=true;tst.hidden=true;info.textContent="Notifications are blocked for MyICE on this phone. To allow them: open the phone's settings, find MyICE (or your browser), and switch Notifications on. Then come back here.";return}
+ if(cfg.alertsPaused)info.textContent="Alerts are paused by the owner for now. Your settings are kept.";
+ else info.textContent=S.alerts?"Alerts are on for "+S.pc+": "+fname(S.fuel)+", within "+S.mi+" miles.":"Get a notification when a station near your home postcode gets cheaper.";
+ btn.textContent=S.alerts?"Turn off alerts":"Turn on alerts";tst.hidden=!S.alerts;
+}
+async function postSub(sub){
+ const g=await geocode(S.pc);
+ const r=await tfetch(SYNC_URL+"/v1/chintzy/sub",15000,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({sub:sub.toJSON(),lat:+g.lat.toFixed(2),lon:+g.lon.toFixed(2),fuel:S.fuel,mi:S.mi,mind:S.mind})});
+ if(!r.ok)throw new Error("service "+r.status);
+}
+async function getSub(make){
+ const reg=await getReg();let sub=await reg.pushManager.getSubscription();
+ if(!sub&&make){if(!cfg.vapid)throw new Error("The alert service is not reachable. Try again in a minute.");sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlB64(cfg.vapid)})}
+ return sub;
+}
+$("alerttoggle").onclick=async()=>{
+ const m=$("alertmsg");m.textContent="";
+ try{
+  if(S.alerts){
+   const sub=await getSub(false);
+   if(sub){const ep=sub.endpoint;await sub.unsubscribe();try{await tfetch(SYNC_URL+"/v1/chintzy/unsub",10000,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({endpoint:ep})})}catch(e){}}
+   S.alerts=false;save();alertUI();toast("✓ Alerts turned off");return}
+  if(!validPc(S.pc)){m.textContent="Save your home postcode first (Settings, Home).";toast("Save a home postcode first",true);return}
+  const perm=await Notification.requestPermission();
+  if(perm!=="granted"){alertUI();m.textContent="You chose not to allow notifications, so no alerts will be sent.";toast("Alerts not allowed",true);return}
+  if(!cfg.vapid)await loadCfg();
+  const sub=await getSub(true);await postSub(sub);
+  S.alerts=true;save();alertUI();toast("✓ Alerts are on");
+ }catch(e){m.textContent="Could not change alerts: "+(e&&e.message?e.message:"no connection");toast("Could not change alerts",true)}
+};
+$("alerttest").onclick=async()=>{
+ const m=$("alertmsg");m.textContent="Sending a test alert...";
+ try{const sub=await getSub(false);if(!sub)throw new Error("Alerts are not set up on this phone. Turn them off and on again.");
+  const r=await tfetch(SYNC_URL+"/v1/chintzy/test",15000,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({sub:sub.toJSON()})});
+  const j=await r.json().catch(()=>({}));
+  if(r.ok&&j.ok){m.textContent="Sent. It should arrive in a few seconds.";toast("✓ Test alert sent")}
+  else if(r.status===429){m.textContent="Please wait a few seconds between tests.";toast("Please wait a few seconds",true)}
+  else{m.textContent="The test was not accepted (code "+(j.code||r.status)+"). Try turning alerts off and on again.";toast("Test failed",true)}
+ }catch(e){m.textContent="Test failed: "+(e&&e.message?e.message:"no connection");toast("Test failed",true)}
+};
+$("mind").onchange=()=>{S.mind=+$("mind").value;save();toast("✓ Saved: drops of "+S.mind+"p or more");syncAlerts(true)};
+/* keep the server's copy of this phone's settings in step; also re-subscribe if this phone has no subscription for this app yet (for example the first time after the app was renamed from Chintzy) */
+async function syncAlerts(announce){
+ if(!S.alerts||!pushOK||!validPc(S.pc))return;
+ try{
+  if(Notification.permission!=="granted"){S.alerts=false;save();alertUI();return}
+  const sub=await getSub(true);await postSub(sub);if(announce)toast("✓ Alerts updated for "+S.pc);
+ }catch(e){}
+}
+
+/* ---------- tabs ---------- */
+function setTab(t){
+ S.tab=t==="f"?"f":"t";save();
+ document.querySelectorAll(".pf").forEach(e=>e.hidden=S.tab!=="f");
+ document.querySelectorAll(".pt").forEach(e=>e.hidden=S.tab!=="t");
+ $("tab_t").className="btn"+(S.tab==="t"?"":" alt");$("tab_f").className="btn"+(S.tab==="f"?"":" alt");
+ $("tab_t").setAttribute("aria-pressed",S.tab==="t");$("tab_f").setAttribute("aria-pressed",S.tab==="f");
+}
+$("tab_t").onclick=()=>{setTab("t");toast("✓ Journey cost")};
+$("tab_f").onclick=()=>{setTab("f");toast("✓ Cheapest petrol");if(S.pc||S.mode==="here"){if(!cur)find(false)}};
+
+/* ---------- share the app ---------- */
+const APP_TEXT="MyICE: what does a journey cost in a petrol or diesel car, compared with an electric car? Finds the cheapest petrol near you too.\nOpen it here: "+APP_URL+"\niPhone: open it in Safari, tap Share, then Add to Home Screen.\nAndroid: open it in Chrome, tap the three dots, then Install app.";
+$("app_wa").href="https://wa.me/?text="+encodeURIComponent(APP_TEXT);
+if(navigator.share){$("app_native").hidden=false;$("app_native").onclick=()=>{try{navigator.share({title:"MyICE",text:APP_TEXT,url:APP_URL}).catch(()=>{})}catch(e){}}}
+$("app_copy").onclick=()=>{try{navigator.clipboard.writeText(APP_TEXT).then(()=>toast("✓ Copied"),()=>toast("Copy blocked here",true))}catch(e){toast("Copy blocked here",true)}};
+
+/* ---------- update check: compares this copy with the newest published one and offers a one-tap update ---------- */
+async function checkUpdate(){
+ if(!/github\.io$/.test(location.hostname))return;
+ try{const r=await tfetch("version.txt?t="+Date.now(),6000);if(!r.ok)return;const v=(await r.text()).trim();
+  if(v&&v!==BUILD&&!$("updbar")){const d=document.createElement("div");d.id="updbar";
+   d.style.cssText="position:fixed;left:0;right:0;top:0;z-index:99;background:#2f6df6;color:#fff;padding:10px 14px;display:flex;gap:10px;align-items:center;justify-content:space-between;font-size:15px";
+   d.innerHTML='<span>A new version of MyICE is available.</span><button class="btn sm" id="updgo" type="button" style="background:#fff;color:#0b1830">Update now</button>';
+   document.body.appendChild(d);
+   $("updgo").onclick=async()=>{const b=$("updgo");b.disabled=true;b.textContent="Updating...";
+    /* one tap: empty MyICE's saved copies, ask the service worker to check for its new file, then reload.
+       (The service worker is NOT removed, because removing it would also cancel this phone's price-drop alerts.) */
+    try{if(window.caches){const ks=await caches.keys();await Promise.all(ks.filter(k=>k.indexOf("myice-")===0).map(k=>caches.delete(k)))}
+     if(navigator.serviceWorker){const rs=await navigator.serviceWorker.getRegistrations();await Promise.all(rs.filter(r=>r.scope.indexOf("/myice/")>=0).map(r=>r.update()))}
+    }catch(e){}
+    location.reload()}}
+ }catch(e){}
+}
+setTimeout(checkUpdate,3000);setInterval(checkUpdate,600000);document.addEventListener("visibilitychange",()=>{if(!document.hidden)checkUpdate()});
+function regSW(){if("serviceWorker" in navigator&&/(github\.io|localhost|127\.0\.0\.1)$/.test(location.hostname)){navigator.serviceWorker.register("sw.js").catch(()=>{})}}
+
+/* ---------- start ---------- */
+fillFuels();showPrefs();fillTrip();showWelcome();alertUI();renderShare();regSW();setTab(S.tab);
+if(S.last&&S.last.d&&S.last.g&&S.last.pc===S.pc&&S.last.d.fuel===S.fuel&&S.mode!=="here"){render(S.last.d,S.last.g,S.last.t)}
+joinLink();
+loadCfg().then(()=>{showPrefs();alertUI();syncAlerts(false);scheduleSync();
+ if(S.tab==="f"){if(S.mode==="here"&&!S.pc)S.mode="pc";
+  if(S.mode==="here"){const ask=()=>{$("findmsg").textContent="Press Use my location to look near you again."};try{navigator.permissions.query({name:"geolocation"}).then(r=>{if(r.state==="granted")find(false);else ask()},ask)}catch(e){ask()}}else if(S.pc)find(false)}});
+})();
+</script>
+
+</body></html>
