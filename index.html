@@ -286,7 +286,7 @@ const $=id=>document.getElementById(id);
 const KEY="myice-v1";
 const SYNC_URL="https://myev.cloudgough.synology.me:8443";
 const APP_URL="https://iangough.github.io/myice/";
-const BUILD="2026-11-14b";
+const BUILD="2026-11-14c";
 const FUELS=[["unleaded","Unleaded (E10)"],["super","Super unleaded (E5)"],["diesel","Diesel"],["premium_diesel","Premium diesel"],["hvo","HVO diesel"],["b10","B10 diesel"]];
 const fname=id=>(FUELS.find(f=>f[0]===id)||[0,id])[1];
 const GAL=4.54609;                                   /* litres in a UK gallon */
@@ -451,7 +451,7 @@ async function roadMiles(a,b){
   async()=>{const r=await tfetch(`https://router.project-osrm.org/route/v1/driving/${co}?overview=false`,9000);const j=await r.json();return j.routes&&j.routes[0]&&j.routes[0].distance/1609.344},
   async()=>{const q={locations:[{lat:a.lat,lon:a.lon},{lat:b.lat,lon:b.lon}],costing:"auto",units:"miles"};const r=await tfetch("https://valhalla1.openstreetmap.de/route?json="+encodeURIComponent(JSON.stringify(q)),9000);const j=await r.json();return j.trip&&j.trip.summary&&j.trip.summary.length}
  ];
- for(const f of tries){try{const v=await f();if(v&&v>0){rcache[key]=v;return v}}catch(e){}}
+ for(const f of tries){try{const v=await f();if(typeof v==="number"&&v>=0){rcache[key]=v;return v}}catch(e){}}
  throw new Error("The road routing services could not be reached. Check your connection and try again.");
 }
 function fillTrip(){
@@ -535,6 +535,7 @@ async function tripGo(manual){
   const pts=[];for(const x of raw)pts.push(await resolvePoint(x));
   let one=0;const legs=[];
   for(let i=0;i<pts.length-1;i++){const d=await roadMiles(pts[i].g,pts[i+1].g);legs.push(d);one+=d}
+  if(one<0.05)throw new Error("The start and the end are the same place, so there is no journey to cost.");
   m.textContent="Finding the cheapest petrol...";
   let opts=[],note="",cen=pts[0].g,nearLabel=pts[0].here?"your location":"the start ("+pts[0].label+")";
   try{if($("t_near").value==="here"){cen=await locate(false);nearLabel="where you are now"}opts=await nearThree(cen,car.fuel);if(!opts.length)note="No stations with a "+fname(car.fuel)+" price within 25 miles of "+nearLabel+". Type your own price below."}
@@ -544,7 +545,9 @@ async function tripGo(manual){
   if(!opts.length)TR.sel=-1;
   renderTrip();m.textContent="";
   if(manual){toast("✓ Cost worked out");blur();$("costcard").scrollIntoView({behavior:"smooth",block:"start"})}
- }catch(e){m.textContent=e&&e.message?e.message:"No connection.";if(manual)toast("Could not work out the cost",true)}
+ }catch(e){m.textContent=(e instanceof TypeError||!navigator.onLine)?"No connection, so road miles and petrol prices cannot be looked up. Your saved journeys, cars and places still work.":(e&&e.message?e.message:"No connection.");if(manual)toast("Could not work out the cost",true);
+  /* never leave the numbers of an older journey on screen under a new route */
+  TR=null;$("tr_head").textContent="What it costs";$("tr_body").innerHTML="<p class='note'>Could not work this journey out: "+esc(m.textContent)+"</p>";$("tr_actions").hidden=true}
  finally{tbusy=false}
 }
 const renderTripIfAny=()=>{if(TR){TR.ret=$("t_ret").checked;renderTrip()}};
@@ -751,7 +754,7 @@ function fillFuels(){
  $("fuel").value=S.fuel;
 }
 function showPrefs(){$("pc").value=S.pc;$("fuel").value=S.fuel;$("mi").value=String(S.mi);$("mind").value=String(S.mind)}
-let cur=null,busy=false;
+let cur=null,busy=false,findAgain=false;
 function render(d,g,saved){
  cur={d,g,saved,got:saved||Date.now()};
  const name=fname(d.fuel);
@@ -776,7 +779,7 @@ function tickAge(){
 setInterval(tickAge,20000);
 const hasTarget=()=>S.tab==="f"&&(S.mode==="here"||!!S.pc);
 async function find(manual){
- if(busy)return;
+ if(busy){if(manual)findAgain=true;return}      /* a press while another lookup is running waits its turn instead of being lost */
  const isHere=S.mode==="here";
  const pc=isHere?"here":normPc($("pc").value||S.pc);
  if(!isHere&&!validPc(pc)){if(manual){$("findmsg").textContent="That postcode does not look right. Check it and try again.";toast("Check the postcode",true)}return}
@@ -796,7 +799,7 @@ async function find(manual){
   if(L&&L.pc===pc&&L.d&&L.d.fuel===S.fuel&&L.d.mi===S.mi&&(L.g||here)){render(L.d,L.g||here,L.t);$("findmsg").textContent="Could not get live prices ("+(e&&e.message&&!(e instanceof TypeError)?e.message:"no connection")+"). Showing your saved copy."}
   else $("findmsg").textContent=(e&&e.message&&!(e instanceof TypeError)?e.message:"No connection.")+(e&&e.message&&/location|postcode not found/i.test(e.message)?(/postcode not found/i.test(e.message)?" Check the postcode and try again.":""):" Try again in a minute.");
   if(manual)toast("Could not get prices",true);
- }finally{busy=false}
+ }finally{busy=false;if(findAgain){findAgain=false;setTimeout(()=>find(true),0)}}
 }
 $("find").onclick=()=>{const pc=normPc($("pc").value);if(!pc&&S.mode!=="here"){$("findmsg").textContent="Type your postcode first, then press the button.";toast("Type a postcode first",true);return}if(validPc(pc)){S.pc=pc;S.mode="pc";save()}else if(S.mode==="here"&&!pc){S.mode="pc"}find(true)};
 $("here").onclick=()=>{S.mode="here";save();find(true)};
